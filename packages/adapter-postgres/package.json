@@ -1,0 +1,5 @@
+{
+  "name": "@dbtuna/adapter-postgres",
+  "version": "0.1.0",
+  "private": true
+}

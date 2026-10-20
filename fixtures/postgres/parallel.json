@@ -1,0 +1,23 @@
+[
+  {
+    "DBTuna Synthetic": true,
+    "Plan": {
+      "Node Type": "Gather",
+      "Startup Cost": 0,
+      "Total Cost": 100,
+      "Plan Rows": 1000,
+      "Plan Width": 32,
+      "Workers": 2,
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Startup Cost": 0,
+          "Total Cost": 100,
+          "Plan Rows": 1000,
+          "Plan Width": 32,
+          "Parallel Aware": true
+        }
+      ]
+    }
+  }
+]

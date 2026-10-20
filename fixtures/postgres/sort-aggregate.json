@@ -1,0 +1,36 @@
+[
+  {
+    "DBTuna Synthetic": true,
+    "Plan": {
+      "Node Type": "Aggregate",
+      "Startup Cost": 0,
+      "Total Cost": 100,
+      "Plan Rows": 1000,
+      "Plan Width": 32,
+      "Plans": [
+        {
+          "Node Type": "Sort",
+          "Startup Cost": 0,
+          "Total Cost": 100,
+          "Plan Rows": 1000,
+          "Plan Width": 32,
+          "Sort Key": [
+            "customer_id"
+          ],
+          "Plans": [
+            {
+              "Node Type": "Seq Scan",
+              "Startup Cost": 0,
+              "Total Cost": 100,
+              "Plan Rows": 1000,
+              "Plan Width": 32,
+              "Relation Name": "orders",
+              "Alias": "o",
+              "Filter": "(status = 'active')"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

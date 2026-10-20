@@ -1,0 +1,198 @@
+[
+  {
+    "Plan": {
+      "Node Type": "ModifyTable",
+      "Operation": "Insert",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Relation Name": "DPF_TMP_15",
+      "Schema": "public",
+      "Alias": "DPF_TMP_15",
+      "Startup Cost": 961.76,
+      "Total Cost": 1864.22,
+      "Plan Rows": 0,
+      "Plan Width": 0,
+      "Disabled": false,
+      "Plans": [
+        {
+          "Node Type": "Merge Join",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Join Type": "Inner",
+          "Startup Cost": 961.76,
+          "Total Cost": 1864.22,
+          "Plan Rows": 51206,
+          "Plan Width": 86,
+          "Disabled": false,
+          "Output": [
+            "tmp.\"DPV_RID\"",
+            "(seed_table.\"LAST_NAME_UPPER\")::character varying(128)"
+          ],
+          "Inner Unique": false,
+          "Merge Cond": "(seed_table.\"DPV_RID\" = hash_table.\"MODULO\")",
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 88.17,
+              "Total Cost": 91.35,
+              "Plan Rows": 1270,
+              "Plan Width": 36,
+              "Disabled": false,
+              "Output": [
+                "seed_table.\"LAST_NAME_UPPER\"",
+                "seed_table.\"DPV_RID\""
+              ],
+              "Sort Key": [
+                "seed_table.\"DPV_RID\""
+              ],
+              "Plans": [
+                {
+                  "Node Type": "Seq Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Relation Name": "DPF_TMP_SEED_16",
+                  "Schema": "public",
+                  "Alias": "seed_table",
+                  "Startup Cost": 0,
+                  "Total Cost": 22.7,
+                  "Plan Rows": 1270,
+                  "Plan Width": 36,
+                  "Disabled": false,
+                  "Output": [
+                    "seed_table.\"LAST_NAME_UPPER\"",
+                    "seed_table.\"DPV_RID\""
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Inner",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 873.59,
+              "Total Cost": 893.75,
+              "Plan Rows": 8064,
+              "Plan Width": 8,
+              "Disabled": false,
+              "Output": [
+                "tmp.\"DPV_RID\"",
+                "hash_table.\"MODULO\""
+              ],
+              "Sort Key": [
+                "hash_table.\"MODULO\""
+              ],
+              "Plans": [
+                {
+                  "Node Type": "Merge Join",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Inner",
+                  "Startup Cost": 176.34,
+                  "Total Cost": 350.34,
+                  "Plan Rows": 8064,
+                  "Plan Width": 8,
+                  "Disabled": false,
+                  "Output": [
+                    "tmp.\"DPV_RID\"",
+                    "hash_table.\"MODULO\""
+                  ],
+                  "Inner Unique": false,
+                  "Merge Cond": "(((COALESCE((tmp.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text) = ((COALESCE((hash_table.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text))",
+                  "Plans": [
+                    {
+                      "Node Type": "Sort",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 88.17,
+                      "Total Cost": 91.35,
+                      "Plan Rows": 1270,
+                      "Plan Width": 36,
+                      "Disabled": false,
+                      "Output": [
+                        "tmp.\"DPV_RID\"",
+                        "tmp.\"LAST_NAME_UPPER\"",
+                        "((COALESCE((tmp.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text)"
+                      ],
+                      "Sort Key": [
+                        "((COALESCE((tmp.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text)"
+                      ],
+                      "Plans": [
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "DPF_TMP_PRE_COND_18",
+                          "Schema": "public",
+                          "Alias": "tmp",
+                          "Startup Cost": 0,
+                          "Total Cost": 22.7,
+                          "Plan Rows": 1270,
+                          "Plan Width": 36,
+                          "Disabled": false,
+                          "Output": [
+                            "tmp.\"DPV_RID\"",
+                            "tmp.\"LAST_NAME_UPPER\"",
+                            "COALESCE((tmp.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying)"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "Node Type": "Sort",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 88.17,
+                      "Total Cost": 91.35,
+                      "Plan Rows": 1270,
+                      "Plan Width": 36,
+                      "Disabled": false,
+                      "Output": [
+                        "hash_table.\"MODULO\"",
+                        "hash_table.\"LAST_NAME_UPPER\"",
+                        "((COALESCE((hash_table.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text)"
+                      ],
+                      "Sort Key": [
+                        "((COALESCE((hash_table.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying))::text)"
+                      ],
+                      "Plans": [
+                        {
+                          "Node Type": "Seq Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Relation Name": "DPF_TMP_HASH_17",
+                          "Schema": "public",
+                          "Alias": "hash_table",
+                          "Startup Cost": 0,
+                          "Total Cost": 22.7,
+                          "Plan Rows": 1270,
+                          "Plan Width": 36,
+                          "Disabled": false,
+                          "Output": [
+                            "hash_table.\"MODULO\"",
+                            "hash_table.\"LAST_NAME_UPPER\"",
+                            "COALESCE((hash_table.\"LAST_NAME_UPPER\")::character varying(8000), ']#NULL#['::character varying)"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

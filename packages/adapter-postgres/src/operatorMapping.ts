@@ -1,0 +1,23 @@
+import type { OperatorCategory } from "../../plan-core/src/types";
+export const operatorMapping: Record<string, OperatorCategory> = {
+  "Seq Scan": "TABLE_SCAN",
+  "Bitmap Heap Scan": "TABLE_SCAN",
+  "Index Scan": "INDEX_ACCESS",
+  "Index Only Scan": "INDEX_ACCESS",
+  "Bitmap Index Scan": "INDEX_ACCESS",
+  "Nested Loop": "JOIN",
+  "Hash Join": "JOIN",
+  "Merge Join": "JOIN",
+  Hash: "HASH",
+  Sort: "SORT",
+  "Incremental Sort": "SORT",
+  Aggregate: "AGGREGATE",
+  GroupAggregate: "AGGREGATE",
+  HashAggregate: "AGGREGATE",
+  Limit: "LIMIT",
+  Materialize: "MATERIALIZE",
+  Gather: "PARALLEL",
+  "Gather Merge": "PARALLEL",
+  Append: "APPEND",
+  "Merge Append": "APPEND",
+};

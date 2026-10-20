@@ -1,0 +1,21 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Relation Name": "orders",
+      "Schema": "public",
+      "Alias": "orders",
+      "Startup Cost": 0,
+      "Total Cost": 32.6,
+      "Plan Rows": 2260,
+      "Plan Width": 8,
+      "Disabled": false,
+      "Output": [
+        "id",
+        "customer_id"
+      ]
+    }
+  }
+]

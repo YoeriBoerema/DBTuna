@@ -1,0 +1,24 @@
+[
+  {
+    "DBTuna Synthetic": true,
+    "Plan": {
+      "Node Type": "CTE Scan",
+      "Startup Cost": 0,
+      "Total Cost": 100,
+      "Plan Rows": 1000,
+      "Plan Width": 32,
+      "CTE Name": "recent",
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Startup Cost": 0,
+          "Total Cost": 100,
+          "Plan Rows": 1000,
+          "Plan Width": 32,
+          "Parent Relationship": "InitPlan",
+          "Subplan Name": "CTE recent"
+        }
+      ]
+    }
+  }
+]

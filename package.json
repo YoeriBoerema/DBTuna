@@ -1,0 +1,126 @@
+{
+  "name": "dbtuna",
+  "displayName": "DBTuna",
+  "description": "Inspect PostgreSQL execution plans beside your SQL.",
+  "version": "0.3.0",
+  "publisher": "dbtuna-local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "postgresql",
+    "explain",
+    "sql"
+  ],
+  "main": "./dist/extension.cjs",
+  "activationEvents": [],
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/unit/*.test.ts",
+    "test:postgres": "tsx --test test/integration/*.test.ts",
+    "test:vscode": "node test/vscode/run.cjs",
+    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.3.0.vsix",
+    "lint": "eslint src packages webview test/unit test/integration",
+    "test:embedded": "node test/integration/embedded.mjs",
+    "format": "prettier --write src packages webview test *.json *.mjs"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "dbtuna.explainQuery",
+        "title": "DBTuna: Explain Query",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "dbtuna.importPlan",
+        "title": "DBTuna: Import Execution Plan"
+      },
+      {
+        "command": "dbtuna.exportPlan",
+        "title": "DBTuna: Export Execution Plan"
+      },
+      {
+        "command": "dbtuna.addConnection",
+        "title": "DBTuna: Add Connection"
+      },
+      {
+        "command": "dbtuna.selectConnection",
+        "title": "DBTuna: Select Connection"
+      },
+      {
+        "command": "dbtuna.manageConnections",
+        "title": "DBTuna: Manage Connections"
+      },
+      {
+        "command": "dbtuna.loadSamplePlan",
+        "title": "DBTuna: Load Sample Plan"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "dbtuna.explainQuery",
+          "when": "editorLangId =~ /^(sql|pgsql|postgres|postgresql)$/ || resourceExtname == .sql",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "dbtuna.explainQuery",
+          "when": "editorLangId =~ /^(sql|pgsql|postgres|postgresql)$/ || resourceExtname == .sql",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Offline plans are available; live connections require trust."
+    }
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.0.0",
+    "elkjs": "^0.11.0",
+    "pg": "^8.16.0",
+    "pgsql-ast-parser": "^12.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/vscode": "^1.96.0",
+    "@vscode/test-electron": "^2.5.0",
+    "@vscode/vsce": "^3.6.0",
+    "embedded-postgres": "18.4.0-beta.17",
+    "esbuild": "^0.25.0",
+    "eslint": "^10.13.0",
+    "playwright": "^1.64.1",
+    "prettier": "^3.9.10",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.71.2"
+  },
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YoeriBoerema/DBTuna.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YoeriBoerema/DBTuna/issues"
+  },
+  "homepage": "https://github.com/YoeriBoerema/DBTuna#readme"
+}

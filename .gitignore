@@ -1,0 +1,9 @@
+node_modules/
+dist/
+work/
+.vscode-test/
+*.vsix
+.env
+.env.*
+!.env.example
+*.log

@@ -1,0 +1,15 @@
+node_modules/**
+src/**
+packages/**
+webview/**
+test/**
+work/**
+**/*.map
+tsconfig.json
+build.mjs
+pnpm-lock.yaml
+.vscode-test/**
+.vscode/**
+eslint.config.mjs
+pnpm-workspace.yaml
+.gitignore
