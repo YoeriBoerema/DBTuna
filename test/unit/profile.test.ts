@@ -5,6 +5,7 @@ import { clientConfig } from "../../src/extension/connection/postgresClient";
 test("profile serialization excludes secrets and validates port/TLS", () => {
   const p = profileSchema.parse({
     id: "test",
+    type: "postgresql",
     name: "Local",
     host: "localhost",
     port: 5432,

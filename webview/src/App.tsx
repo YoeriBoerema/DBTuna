@@ -20,6 +20,7 @@ import {
 import ELK from "elkjs/lib/elk.bundled.js";
 import { OperatorIcon } from "./OperatorIcon";
 import { nodeSize, presentEdges, type PlanView } from "./graphPresentation";
+import { estimatedPlanCost } from "../../packages/plan-core/src/metrics";
 import type { PlanBatch } from "../../packages/plan-core/src/batch";
 import type { PlanNode, QueryPlan } from "../../packages/plan-core/src/types";
 import type {
@@ -93,7 +94,10 @@ function Operator({ id, data, selected }: NodeProps<FlowNode>) {
             left: Math.max(8, Math.min(rect.left, window.innerWidth - 276)),
             top: Math.max(
               8,
-              Math.min(rect.bottom + 10, window.innerHeight - 210),
+              Math.min(
+                rect.bottom + 10,
+                window.innerHeight - (n.actuals ? 330 : 260),
+              ),
             ),
           });
         }, 500);
@@ -122,13 +126,17 @@ function Operator({ id, data, selected }: NodeProps<FlowNode>) {
       {compact ? (
         <div className="compact-metrics">
           <span>Cost: {fmt(n.estimates?.totalCost)}</span>
-          <span>Est. rows: {fmt(n.estimates?.rows)}</span>
+          <span>
+            {n.actuals
+              ? "Actual rows: " + fmt(n.actuals.rows)
+              : "Est. rows: " + fmt(n.estimates?.rows)}
+          </span>
         </div>
       ) : (
         <div className="node-metrics">
           <span>
-            {fmt(n.estimates?.rows)}
-            <small>est. rows</small>
+            {fmt(n.actuals ? n.actuals.rows : n.estimates?.rows)}
+            <small>{n.actuals ? "actual rows" : "est. rows"}</small>
           </span>
           <span>
             {fmt(n.estimates?.totalCost)}
@@ -152,10 +160,22 @@ function Operator({ id, data, selected }: NodeProps<FlowNode>) {
             <div className="tooltip-operation">{n.label}</div>
             <dl>
               {Object.entries({
-                "Startup cost": n.estimates?.startupCost,
-                "Total cost": n.estimates?.totalCost,
+                ...(n.estimates?.costScope === "subtree"
+                  ? {}
+                  : { "Startup cost": n.estimates?.startupCost }),
+                [n.estimates?.costScope === "subtree"
+                  ? "Subtree cost"
+                  : "Total cost"]: n.estimates?.totalCost,
+                "Estimated CPU cost": n.estimates?.cpuCost,
+                "Estimated I/O cost": n.estimates?.ioCost,
                 "Estimated rows": n.estimates?.rows,
                 "Row width (bytes)": n.estimates?.rowWidth,
+                ...(n.actuals
+                  ? {
+                      "Actual rows": n.actuals.rows,
+                      "Actual executions": n.actuals.loops,
+                    }
+                  : {}),
               }).map(([key, value]) => (
                 <React.Fragment key={key}>
                   <dt>{key}</dt>
@@ -171,7 +191,128 @@ function Operator({ id, data, selected }: NodeProps<FlowNode>) {
   );
 }
 const nodeTypes = { operator: Operator };
-function Details({ node }: { node?: PlanNode }) {
+function AiAdvice({ plan, node }: { plan: QueryPlan; node: PlanNode }) {
+  const [context, setContext] = useState("");
+  const [query, setQuery] = useState("");
+  const [pending, setPending] = useState(false);
+  const [result, setResult] =
+    useState<Extract<ExtensionToWebview, { type: "AI_RESULT" }>>();
+  const active = useRef<string | undefined>(undefined);
+  const contextId = useId(),
+    queryId = useId();
+  useEffect(() => {
+    const listener = (event: MessageEvent<ExtensionToWebview>) => {
+      const message = event.data;
+      if (
+        message.type !== "AI_RESULT" ||
+        message.requestId !== active.current ||
+        message.planId !== plan.id ||
+        message.nodeId !== node.id
+      )
+        return;
+      active.current = undefined;
+      setPending(false);
+      setResult(message);
+    };
+    window.addEventListener("message", listener);
+    return () => {
+      window.removeEventListener("message", listener);
+      if (active.current)
+        api.postMessage({ type: "AI_CANCEL", requestId: active.current });
+    };
+  }, [plan.id, node.id]);
+  return (
+    <section className="ai-assistance" aria-label="AI Assistance">
+      <h3>AI Assistance</h3>
+      <p className="ai-disclosure">
+        Sends this query, its plan, the selected operator and your context to
+        OpenAI. API usage charges apply.
+      </p>
+      {!plan.query?.trim() && (
+        <>
+          <label htmlFor={queryId}>SQL query</label>
+          <textarea
+            id={queryId}
+            value={query}
+            maxLength={1024 * 1024}
+            rows={4}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Paste the SQL for this imported plan"
+          />
+        </>
+      )}
+      <label htmlFor={contextId}>Additional context (optional)</label>
+      <textarea
+        id={contextId}
+        value={context}
+        maxLength={4000}
+        rows={3}
+        onChange={(e) => setContext(e.target.value)}
+        placeholder="What should the advice focus on?"
+      />
+      <div className="ai-controls">
+        <button
+          className="primary"
+          disabled={pending || !(plan.query?.trim() || query.trim())}
+          onClick={() => {
+            const requestId = crypto.randomUUID();
+            active.current = requestId;
+            setPending(true);
+            setResult(undefined);
+            api.postMessage({
+              type: "AI_ANALYZE",
+              requestId,
+              planId: plan.id,
+              nodeId: node.id,
+              context,
+              ...(!plan.query?.trim() ? { query } : {}),
+            });
+          }}
+        >
+          {pending ? "Analyzing..." : "Get AI advice"}
+        </button>
+        {pending && (
+          <button
+            onClick={() => {
+              if (active.current)
+                api.postMessage({
+                  type: "AI_CANCEL",
+                  requestId: active.current,
+                });
+            }}
+          >
+            Cancel
+          </button>
+        )}
+        <button onClick={() => api.postMessage({ type: "AI_SETTINGS" })}>
+          Settings
+        </button>
+      </div>
+      <div aria-live="polite" aria-busy={pending}>
+        {pending && <p>Waiting for OpenAI...</p>}
+        {result?.error && (
+          <p role="alert" className="ai-error">
+            {result.error}
+          </p>
+        )}
+        {result?.text && (
+          <>
+            <div className="ai-output">{result.text}</div>
+            <small>
+              Model: {result.model} - review proposed SQL before use
+            </small>
+            {result.incomplete && (
+              <p className="ai-error">
+                Response reached its output limit; advice may be incomplete.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+function Details({ node, plan }: { node?: PlanNode; plan: QueryPlan }) {
   if (!node)
     return (
       <aside>
@@ -204,8 +345,14 @@ function Details({ node }: { node?: PlanNode }) {
       </h3>
       <dl>
         {Object.entries({
-          "Startup cost": node.estimates?.startupCost,
-          "Total cost": node.estimates?.totalCost,
+          ...(node.estimates?.costScope === "subtree"
+            ? {}
+            : { "Startup cost": node.estimates?.startupCost }),
+          [node.estimates?.costScope === "subtree"
+            ? "Subtree cost"
+            : "Total cost"]: node.estimates?.totalCost,
+          "Estimated CPU cost": node.estimates?.cpuCost,
+          "Estimated I/O cost": node.estimates?.ioCost,
           "Estimated rows": node.estimates?.rows,
           "Row width (bytes)": node.estimates?.rowWidth,
         }).map(([k, v]) => (
@@ -217,14 +364,27 @@ function Details({ node }: { node?: PlanNode }) {
       </dl>
       <h3>
         Actual execution{" "}
-        <span>{node.actuals ? "imported metrics" : "not measured"}</span>
+        <span>{node.actuals ? "measured metrics" : "not measured"}</span>
       </h3>
       <dl>
         {Object.entries({
-          "Actual rows": node.actuals?.rows,
-          Loops: node.actuals?.loops,
-          "Startup (ms)": node.actuals?.startupTimeMs,
-          "Total (ms)": node.actuals?.totalTimeMs,
+          [node.actuals?.rowsScope === "total"
+            ? "Actual rows (total)"
+            : "Actual rows (per loop)"]: node.actuals?.rows,
+          ...(node.actuals?.elapsedTimeMs !== undefined
+            ? { "Max thread elapsed (ms)": node.actuals.elapsedTimeMs }
+            : {}),
+          ...(node.actuals?.cpuTimeMs !== undefined
+            ? { "CPU across threads (ms)": node.actuals.cpuTimeMs }
+            : {}),
+          [node.actuals?.rowsScope === "total" ? "Executions (sum)" : "Loops"]:
+            node.actuals?.loops,
+          ...(node.actuals?.rowsScope === "total"
+            ? {}
+            : {
+                "Startup per loop (ms)": node.actuals?.startupTimeMs,
+                "Total per loop (ms)": node.actuals?.totalTimeMs,
+              }),
         }).map(([k, v]) => (
           <React.Fragment key={k}>
             <dt>{k}</dt>
@@ -239,6 +399,7 @@ function Details({ node }: { node?: PlanNode }) {
           <pre>{JSON.stringify(v, null, 2)}</pre>
         </details>
       ))}
+      <AiAdvice key={plan.id + ":" + node.id} plan={plan} node={node} />
     </aside>
   );
 }
@@ -417,7 +578,7 @@ function PlanWorkspace({
             )}
           </ReactFlow>
         </section>
-        <Details node={plan.nodes.find((n) => n.id === selected)} />
+        <Details plan={plan} node={plan.nodes.find((n) => n.id === selected)} />
       </div>
       <footer>
         <span>
@@ -458,6 +619,144 @@ function PlanWorkspace({
     </div>
   );
 }
+function ExecutablePlan(props: React.ComponentProps<typeof PlanWorkspace>) {
+  const { plan } = props;
+  const [actual, setActual] = useState<QueryPlan>();
+  const [mode, setMode] = useState<"estimated" | "actual">("estimated");
+  const [status, setStatus] = useState<
+    "idle" | "confirming" | "running" | "complete" | "error" | "cancelled"
+  >("idle");
+  const [error, setError] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+  const active = useRef<string | undefined>(undefined);
+  const started = useRef(0);
+  const pending = status === "confirming" || status === "running";
+  useEffect(() => {
+    const listener = (event: MessageEvent<ExtensionToWebview>) => {
+      const message = event.data;
+      if (
+        message.type !== "EXECUTION_RESULT" ||
+        message.planId !== plan.id ||
+        message.requestId !== active.current
+      )
+        return;
+      setStatus(message.status);
+      setError(message.error || "");
+      if (message.status === "running") {
+        started.current = Date.now();
+        setElapsed(0);
+      } else {
+        active.current = undefined;
+        if (message.actualPlan) {
+          setActual(message.actualPlan);
+          setMode("actual");
+        }
+        if (message.elapsedMs !== undefined) setElapsed(message.elapsedMs);
+      }
+    };
+    window.addEventListener("message", listener);
+    return () => {
+      window.removeEventListener("message", listener);
+      if (active.current)
+        api.postMessage({ type: "CANCEL_ACTUAL", requestId: active.current });
+    };
+  }, [plan.id]);
+  useEffect(() => {
+    if (status !== "running") return;
+    const timer = setInterval(
+      () => setElapsed(Date.now() - started.current),
+      250,
+    );
+    return () => clearInterval(timer);
+  }, [status]);
+  return (
+    <div className="executable-plan">
+      <div className="execution-controls">
+        <div role="tablist" aria-label="Plan measurements">
+          <button
+            role="tab"
+            aria-selected={mode === "estimated"}
+            onClick={() => setMode("estimated")}
+          >
+            Estimated
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === "actual"}
+            disabled={!actual}
+            onClick={() => setMode("actual")}
+          >
+            Actual
+          </button>
+        </div>
+        <button
+          disabled={pending || plan.metadata.executionAvailable !== true}
+          title={
+            plan.metadata.executionAvailable === true
+              ? "Executes the displayed query on its original connection; INSERT changes persist."
+              : String(
+                  plan.metadata.executionUnavailableReason ||
+                    "Run Explain on a live SELECT or INSERT first.",
+                )
+          }
+          onClick={() => {
+            const requestId = crypto.randomUUID();
+            active.current = requestId;
+            setStatus("confirming");
+            setError("");
+            setMode("estimated");
+            api.postMessage({ type: "RUN_ACTUAL", planId: plan.id, requestId });
+          }}
+        >
+          {actual
+            ? "Run again and collect actual plan"
+            : "Run query and collect actual plan"}
+        </button>
+        {pending && (
+          <button
+            onClick={() => {
+              if (active.current)
+                api.postMessage({
+                  type: "CANCEL_ACTUAL",
+                  requestId: active.current,
+                });
+            }}
+          >
+            Cancel execution
+          </button>
+        )}
+        {actual && (
+          <button
+            onClick={() =>
+              api.postMessage({ type: "EXPORT_ACTUAL", planId: plan.id })
+            }
+          >
+            Export actual plan
+          </button>
+        )}
+        <span role="status">
+          {status === "confirming"
+            ? "Awaiting confirmation..."
+            : status === "running"
+              ? `Executing: ${(elapsed / 1000).toFixed(1)} s`
+              : status === "complete"
+                ? `Completed - client elapsed ${fmt(elapsed)} ms`
+                : ""}
+        </span>
+      </div>
+      {error && (
+        <div role="alert" className="execution-error">
+          {error}
+        </div>
+      )}
+      <PlanWorkspace
+        {...props}
+        key={mode}
+        plan={mode === "actual" && actual ? actual : plan}
+      />
+    </div>
+  );
+}
 function LazyPlan({
   plan,
   view,
@@ -489,7 +788,7 @@ function LazyPlan({
     <div ref={ref} className="lazy-plan">
       {visible ? (
         <ReactFlowProvider>
-          <PlanWorkspace
+          <ExecutablePlan
             plan={plan}
             view={view}
             revision={revision}
@@ -583,12 +882,15 @@ function App() {
             <div className="subtitle">
               {firstPlan
                 ? `${firstPlan.database.engine.toUpperCase()} ${firstPlan.database.version || ""} · ${String(firstPlan.metadata.connectionLabel || batch?.connectionLabel || "Local plan")}`
-                : batch?.connectionLabel || "PostgreSQL plan visualizer"}
+                : batch?.connectionLabel || "Database plan visualizer"}
             </div>
           </div>
         </div>
         <div className="actions">
-          <span className="estimated">● Estimated</span>
+          <button onClick={() => api.postMessage({ type: "AI_SETTINGS" })}>
+            AI Assistance
+          </button>
+          <span className="estimated">Plans</span>
           <select
             aria-label="Plan view"
             value={view}
@@ -648,8 +950,8 @@ function App() {
                 ? " · cancelled"
                 : " · finished"}
             <small>
-              Estimated plans only. Statements do not execute or prepare data
-              for later queries.
+              Explain collects estimates only. Use a query's Run action to
+              execute it and collect an actual plan; INSERT changes persist.
             </small>
           </div>
           <div className="batch-list">
@@ -674,12 +976,7 @@ function App() {
                   </span>
                   {item.plan && (
                     <span className="query-cost">
-                      Plan cost:{" "}
-                      {fmt(
-                        item.plan.nodes.find(
-                          (n) => n.id === item.plan!.rootNodeIds[0],
-                        )?.estimates?.totalCost,
-                      )}
+                      Plan cost: {fmt(estimatedPlanCost(item.plan))}
                     </span>
                   )}
                 </div>
@@ -707,7 +1004,7 @@ function App() {
                 ) : (
                   <div className="query-pending">
                     {item.status === "running"
-                      ? "Requesting estimated PostgreSQL plan…"
+                      ? "Requesting estimated query plan…"
                       : "Waiting for earlier queries…"}
                   </div>
                 )}
@@ -718,7 +1015,7 @@ function App() {
       ) : plan ? (
         <div className="single-plan">
           <ReactFlowProvider>
-            <PlanWorkspace
+            <ExecutablePlan
               key={plan.id}
               plan={plan}
               view={view}
@@ -732,7 +1029,7 @@ function App() {
           <div className="empty-mark">⌘</div>
           <div className="eyebrow">A CLEARER VIEW OF YOUR QUERY</div>
           <h2>
-            See how PostgreSQL
+            See how your database
             <br />
             plans your SQL.
           </h2>

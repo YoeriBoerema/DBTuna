@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" DBTunaSynthetic="true" Version="1.539" Build="16.0.1000.6">
+<BatchSequence><Batch><Statements>
+<StmtSimple StatementId="1" StatementText="SELECT * FROM dbo.Customers WHERE LastName = N'Smith'" StatementType="SELECT" StatementSubTreeCost="0.02">
+<QueryPlan><RelOp NodeId="0" PhysicalOp="Nested Loops" LogicalOp="Inner Join" EstimateRows="12" EstimateCPU="0.001" EstimateIO="0" EstimatedTotalSubtreeCost="0.02" AvgRowSize="80">
+<NestedLoops><RelOp NodeId="1" PhysicalOp="Index Seek" LogicalOp="Index Seek" EstimateRows="12" EstimatedTotalSubtreeCost="0.004" AvgRowSize="20"><IndexScan><Object Database="[Example]" Schema="[dbo]" Table="[Customers]" Index="[IX_Customers_LastName]"/><SeekPredicates><ScalarOperator ScalarString="[LastName]=N'Smith'"/></SeekPredicates></IndexScan></RelOp>
+<RelOp NodeId="2" PhysicalOp="Key Lookup" LogicalOp="Key Lookup" EstimateRows="1" EstimatedTotalSubtreeCost="0.015" AvgRowSize="80"><IndexScan><Object Schema="[dbo]" Table="[Customers]" Index="[PK_Customers]"/></IndexScan></RelOp></NestedLoops></RelOp></QueryPlan>
+</StmtSimple><StmtSimple StatementId="2" StatementText="SELECT 1" StatementType="SELECT"><QueryPlan><RelOp NodeId="0" PhysicalOp="Constant Scan" LogicalOp="Constant Scan" EstimateRows="1" EstimatedTotalSubtreeCost="0" AvgRowSize="4"><ConstantScan/></RelOp></QueryPlan></StmtSimple>
+</Statements></Batch></BatchSequence></ShowPlanXML>

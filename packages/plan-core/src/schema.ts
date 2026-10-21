@@ -27,10 +27,26 @@ export const nodeSchema = z.object({
     })
     .optional(),
   estimates: z
-    .object({ startupCost: num, totalCost: num, rows: num, rowWidth: num })
+    .object({
+      startupCost: num,
+      totalCost: num,
+      rows: num,
+      rowWidth: num,
+      cpuCost: num,
+      ioCost: num,
+      costScope: z.enum(["subtree", "operator"]).optional(),
+    })
     .optional(),
   actuals: z
-    .object({ rows: num, loops: num, startupTimeMs: num, totalTimeMs: num })
+    .object({
+      rows: num,
+      loops: num,
+      startupTimeMs: num,
+      totalTimeMs: num,
+      rowsScope: z.enum(["total", "per_execution"]).optional(),
+      elapsedTimeMs: num,
+      cpuTimeMs: num,
+    })
     .optional(),
   properties: z.record(z.string(), z.unknown()),
 });

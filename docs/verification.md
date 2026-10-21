@@ -62,3 +62,47 @@ Release checks: 27 unit tests, TypeScript typecheck, ESLint, production build an
 Batch unit coverage includes exact selection scope; lexical strings, identifiers, E strings, dollar quotes and nested comments; unclosed/ambiguous quoting; 20-statement/1 MiB bounds; sequential collection; syntax/unsupported/database error isolation; cancellation preserving earlier plans; unique plan identities; batch round trips and import normalization. PostgreSQL 18.4 mixed-batch integration returns three successful plans and two isolated errors and verifies the INSERT left table counts unchanged. Browser checks cover separate query sections, independent selection, SQL previews, cancel/export messages, view switching and saved batch state. Existing tooltip, themes, 101-node graph and single-plan checks pass.
 
 Release checks: 34 unit tests, strict typecheck, ESLint, production build, PostgreSQL 18.4 integration, browser batch checks and the actual VS Code exact-selection batch command passed. The Extension Host command test uses unsupported statements to verify per-query errors without configuring a database. Native import/export file dialogs and the connection wizard still retain the earlier manual coverage limitations.
+
+## SQL Server addition - 21 October 2026
+
+Version 0.4.0 adds typed connection profiles, SQL Server transport, Showplan XML normalization, GO-delimited dependent batches, UTF-8/UTF-16 plan import and engine-aware cost labels. SQL authentication and explicit NTLM domain credentials are implemented; integrated sign-in and Entra are outside this release. SELECT, INSERT, WITH and DECLARE/query batches are supported; UPDATE/DELETE, DDL, SET, dynamic execution and SQLCMD directives are rejected.
+
+Passed: 42 unit tests, TypeScript, ESLint, production builds, existing PostgreSQL 18.4 isolated integration, VS Code 1.96.4 activation, existing browser regressions and SQL Server fixture rendering (four operators, two statement roots, native properties, subtree metrics and delayed tooltip). The SQL Server fixture is illustrative and explicitly marked synthetic, not captured from a server.
+
+SQL Server live collection, NTLM and real certificate validation remain unverified: Docker is installed but its engine was not running. An opt-in test in `test/integration/sqlserver.test.ts` targets only localhost:55440/dbtuna_integration and checks SELECT, INSERT row-count invariance, dependent statements, invalid SQL and pre-cancellation. It was not run against a live server.
+
+At the user's explicit request, the normal VS Code storage had DBTuna connection metadata reset and four password entries deleted. No unrelated extension storage was changed. The one-time connection migration clears legacy profiles on first 0.4 activation; newly created profiles persist.
+
+## SQL Server statement sections - 0.4.1
+
+SQL Server Showplan responses are now normalized into individual statement plans before displaying batch results. Each receives its own query text, graph, cost, selection and status. Native GO batches remain intact during collection, preserving DECLARE/query compilation context. Imported multi-statement Showplan files also produce separate query sections. Repeated identical SQL is not deduplicated. New regression tests use the reported three join queries, verify one collection call produces three independent results, and cover subsequent batches, cancellation and the 20-result limit.
+
+## AI Assistance - 0.5.0
+
+Added AI Assistance commands and a native SQL-editor submenu with Set API Key, Select Model and Remove API Key. The operator detail panel sends the displayed query, normalized plan, engine/version, selected operator and optional context through host-side OpenAI Responses requests. Account model discovery uses GET /v1/models with a manual-ID fallback. Credentials remain in SecretStorage; response messages are ephemeral and output is plain React text. No SQL execution is attached to advice.
+
+Passed: 49 unit tests; TypeScript and ESLint; browser checks for explicit requests only, correct plan/operator/context payloads, rejected stale replies, isolation between query sections, plain-text rendering, cancellation, settings dispatch and no advice in saved plan state. Existing PostgreSQL/SQL Server visualizer browser checks also passed. OpenAI client tests use an injected mock fetch transport to verify authorization placement, exact URLs, store:false, bounded input/output, response extraction, model filtering, provider-status sanitization, network failures, cancellation and incomplete responses.
+
+No live OpenAI request was made: no dedicated API key was supplied for development. Model access, account quota/billing and real network/TLS behavior must be confirmed after configuring a key. The model-list endpoint does not guarantee Responses compatibility; unsupported models return a clear error and can be changed through the selector.
+
+## Concise scored advice - 0.5.1
+
+AI Assistance moved below native attributes at the bottom of operator details. Responses now use strict structured output and local validation: integer score 1-100, one short score reason, up to three suggestions (200 characters each), and a complete proposed query whenever suggestions exist. Only the score paragraph, Suggestions and conditional Updated query blocks are rendered; provider model attribution follows the content. Score is a qualitative AI assessment, not a runtime/completion guarantee. Index/statistics-only recommendations keep the original query unchanged. Invalid or incomplete output fails explicitly rather than displaying partial SQL.
+
+Tests cover score endpoints/out-of-range values, missing proposed queries, excess suggestions, unexpected fields, and no-suggestion output. Browser regression asserts that AI Assistance is the final detail-panel child and the response starts with the score and includes proposed SQL. No live OpenAI call was made for this change.
+
+## Actual plan MVP - 0.6.0
+
+Added a separate confirmed runtime action for individual SELECT/INSERT plans on PostgreSQL and SQL Server, with original connection binding, one active run, elapsed status, cancellation, Estimated/Actual tabs and separate actual-plan export. AI can inspect the actual plan. Runtime state is ephemeral and import never enables execution. Normal query results are discarded; actual plans remain bounded.
+
+Passed isolated PostgreSQL 18.4 integration: actual SELECT counters, actual INSERT counters and exactly one committed inserted row, duplicate-key rollback, pre-cancelled INSERT without changes, and all previous estimated-plan no-write checks. SQL Server STATISTICS XML request sequencing/cleanup and aggregate runtime metrics are unit-tested; the opt-in localhost integration test now covers actual SELECT and persistent INSERT, but no SQL Server instance was available to run it.
+
+Execution guards tested: current host bindings only, trust and confirmation, original-profile matching, no browser-supplied SQL/connection, single-flight INSERTs, no automatic retries, uncertainty after failures and bounded literal declaration context without replaying earlier statements. Browser tests cover explicit run dispatch, scoped responses, measured row display, Estimated/Actual switching, progress/cancellation/error states, offline-disabled action and actual export.
+
+MVP limitations: 30-second execution timeout, no results grid or live in-flight plan, no persistent actual history, limited SQL Server variable setup, trigger-plan identification may fail after execution, and row/time semantics differ by engine. SQL Server live collection and native cancellation remain verification gaps.
+
+Final MVP checks: 58 unit tests, TypeScript, ESLint, production build, VS Code 1.96.4 activation, isolated PostgreSQL execution integration and browser regressions passed. Runtime toolbar layout includes a footer-visibility check so the new controls do not clip the graph/navigation. SQL Server live integration remains unrun.
+
+## SQL Server XML line breaks - 0.6.1
+
+Confirmed fast-xml-parser left numeric XML character references in StatementText. Their semicolons reached execution validation and incorrectly disabled the Run action. Attribute/text values now decode XML predefined and numeric references exactly once with parser entity processing disabled, in both the original and per-statement parse paths. Invalid XML code points are rejected. Regression tests cover the reported three join queries with hexadecimal/decimal CRLF references, execution validation, named entities, supplementary Unicode characters and escaped entity-looking SQL literals without double decoding. A browser check verifies real line breaks in the SQL preview. Existing cached/canonical plans are not rewritten; a fresh Explain regenerates corrected statement text.

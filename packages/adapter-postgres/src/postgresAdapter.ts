@@ -43,6 +43,7 @@ export class PostgresAdapter implements QueryPlanAdapter {
       const actuals = Object.keys(n).some((k) => k.startsWith("Actual "))
         ? {
             rows: number("Actual Rows"),
+            rowsScope: "per_execution" as const,
             loops: number("Actual Loops"),
             startupTimeMs: number("Actual Startup Time"),
             totalTimeMs: number("Actual Total Time"),

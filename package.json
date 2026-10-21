@@ -1,8 +1,8 @@
 {
   "name": "dbtuna",
   "displayName": "DBTuna",
-  "description": "Inspect PostgreSQL execution plans beside your SQL.",
-  "version": "0.3.0",
+  "description": "Inspect PostgreSQL and SQL Server execution plans beside your SQL.",
+  "version": "0.6.1",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {
@@ -15,7 +15,8 @@
   "keywords": [
     "postgresql",
     "explain",
-    "sql"
+    "sql",
+    "sqlserver"
   ],
   "main": "./dist/extension.cjs",
   "activationEvents": [],
@@ -28,7 +29,7 @@
     "test": "tsx --test test/unit/*.test.ts",
     "test:postgres": "tsx --test test/integration/*.test.ts",
     "test:vscode": "node test/vscode/run.cjs",
-    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.3.0.vsix",
+    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.6.1.vsix",
     "lint": "eslint src packages webview test/unit test/integration",
     "test:embedded": "node test/integration/embedded.mjs",
     "format": "prettier --write src packages webview test *.json *.mjs"
@@ -63,6 +64,22 @@
       {
         "command": "dbtuna.loadSamplePlan",
         "title": "DBTuna: Load Sample Plan"
+      },
+      {
+        "command": "dbtuna.aiAssistance",
+        "title": "DBTuna: AI Assistance"
+      },
+      {
+        "command": "dbtuna.aiSetApiKey",
+        "title": "DBTuna: AI Assistance: Set API Key"
+      },
+      {
+        "command": "dbtuna.aiSelectModel",
+        "title": "DBTuna: AI Assistance: Select Model"
+      },
+      {
+        "command": "dbtuna.aiRemoveApiKey",
+        "title": "DBTuna: AI Assistance: Remove API Key"
       }
     ],
     "menus": {
@@ -71,6 +88,11 @@
           "command": "dbtuna.explainQuery",
           "when": "editorLangId =~ /^(sql|pgsql|postgres|postgresql)$/ || resourceExtname == .sql",
           "group": "navigation"
+        },
+        {
+          "submenu": "dbtuna.aiMenu",
+          "group": "navigation",
+          "when": "editorLangId =~ /^(sql|pgsql|postgres|postgresql)$/ || resourceExtname == .sql"
         }
       ],
       "editor/title": [
@@ -79,8 +101,28 @@
           "when": "editorLangId =~ /^(sql|pgsql|postgres|postgresql)$/ || resourceExtname == .sql",
           "group": "navigation"
         }
+      ],
+      "dbtuna.aiMenu": [
+        {
+          "command": "dbtuna.aiSetApiKey",
+          "group": "1_settings"
+        },
+        {
+          "command": "dbtuna.aiSelectModel",
+          "group": "1_settings"
+        },
+        {
+          "command": "dbtuna.aiRemoveApiKey",
+          "group": "1_settings"
+        }
       ]
-    }
+    },
+    "submenus": [
+      {
+        "id": "dbtuna.aiMenu",
+        "label": "DBTuna: AI Assistance"
+      }
+    ]
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -91,10 +133,12 @@
   "dependencies": {
     "@xyflow/react": "^12.0.0",
     "elkjs": "^0.11.0",
+    "fast-xml-parser": "^5.11.2",
     "pg": "^8.16.0",
     "pgsql-ast-parser": "^12.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tedious": "^18.6.2",
     "zod": "^4.0.0"
   },
   "devDependencies": {

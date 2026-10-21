@@ -2,7 +2,11 @@ import * as vscode from "vscode";
 import { randomBytes } from "node:crypto";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import type { PlanBatch } from "../../../packages/plan-core/src/batch";
-import type { ExtensionToWebview } from "./messages";
+import {
+  webviewMessageSchema,
+  type ExtensionToWebview,
+  type WebviewToExtension,
+} from "./messages";
 export class PanelManager implements vscode.Disposable {
   private panel?: vscode.WebviewPanel;
   private ready = false;
@@ -15,6 +19,7 @@ export class PanelManager implements vscode.Disposable {
   constructor(
     private context: vscode.ExtensionContext,
     private cancel: () => void = () => {},
+    private assist: (message: WebviewToExtension) => void = () => {},
   ) {}
   open() {
     if (this.panel) {
@@ -53,24 +58,37 @@ export class PanelManager implements vscode.Disposable {
       this.ready = false;
     });
     panel.webview.onDidReceiveMessage((m: unknown) => {
+      const parsed = webviewMessageSchema.safeParse(m);
+      if (!parsed.success) return;
+      const message = parsed.data;
       if (
-        !m ||
-        typeof m !== "object" ||
-        !("type" in m) ||
-        Object.keys(m).length !== 1
-      )
+        message.type === "AI_ANALYZE" ||
+        message.type === "AI_CANCEL" ||
+        message.type === "RUN_ACTUAL" ||
+        message.type === "CANCEL_ACTUAL" ||
+        message.type === "EXPORT_ACTUAL"
+      ) {
+        this.assist(message);
         return;
-      if (m.type === "WEBVIEW_READY") {
+      }
+      if (message.type === "AI_SETTINGS") {
+        void vscode.commands.executeCommand("dbtuna.aiAssistance");
+        return;
+      }
+      if (message.type === "WEBVIEW_READY") {
         this.ready = true;
         if (this.state) void panel.webview.postMessage(this.state);
-      } else if (m.type === "EXPORT_PLAN")
+      } else if (message.type === "EXPORT_PLAN")
         void vscode.commands.executeCommand("dbtuna.exportPlan");
-      else if (m.type === "IMPORT_PLAN")
+      else if (message.type === "IMPORT_PLAN")
         void vscode.commands.executeCommand("dbtuna.importPlan");
-      else if (m.type === "LOAD_SAMPLE")
+      else if (message.type === "LOAD_SAMPLE")
         void vscode.commands.executeCommand("dbtuna.loadSamplePlan");
-      else if (m.type === "CANCEL_BATCH") this.cancel();
+      else if (message.type === "CANCEL_BATCH") this.cancel();
     });
+  }
+  post(message: ExtensionToWebview) {
+    if (this.ready) void this.panel?.webview.postMessage(message);
   }
   send(message: ExtensionToWebview) {
     if (!this.panel) this.open();

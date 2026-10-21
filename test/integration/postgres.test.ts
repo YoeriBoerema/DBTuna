@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { writeFileSync, readFileSync } from "node:fs";
 import {
   collectPlan,
+  collectActualPlan,
   withClient,
 } from "../../src/extension/connection/postgresClient";
 import { PostgresAdapter } from "../../packages/adapter-postgres/src/postgresAdapter";
@@ -126,5 +127,57 @@ test("real PostgreSQL read-only EXPLAIN workflow", async () => {
       await c.query("BEGIN READ ONLY");
       await c.query("DELETE FROM orders");
     }),
+  );
+  const measuredSelect = await collectActualPlan(
+    config,
+    "SELECT * FROM orders",
+  );
+  const measured = a.parse(measuredSelect.raw);
+  assert.ok(measured.nodes.some((node) => node.actuals));
+  assert.equal(measured.nodes[0].actuals?.rows, 100);
+  assert.ok("Execution Time" in measured.metadata);
+  const measuredInsert = await collectActualPlan(
+    config,
+    "INSERT INTO orders(id,customer_id) VALUES (999,1)",
+  );
+  assert.ok(a.parse(measuredInsert.raw).nodes[0].actuals);
+  await withClient(config, async (client) =>
+    assert.equal(
+      (await client.query("SELECT count(*)::int AS n FROM orders WHERE id=999"))
+        .rows[0].n,
+      1,
+    ),
+  );
+  await assert.rejects(() =>
+    collectActualPlan(config, "INSERT INTO customers VALUES (1)"),
+  );
+  await withClient(config, async (client) =>
+    assert.equal(
+      (await client.query("SELECT count(*)::int AS n FROM customers")).rows[0]
+        .n,
+      20,
+    ),
+  );
+  const stopped = new AbortController();
+  stopped.abort();
+  await assert.rejects(() =>
+    collectActualPlan(
+      config,
+      "INSERT INTO customers VALUES (999)",
+      stopped.signal,
+    ),
+  );
+  await withClient(config, async (client) =>
+    assert.equal(
+      (
+        await client.query(
+          "SELECT count(*)::int AS n FROM customers WHERE id=999",
+        )
+      ).rows[0].n,
+      0,
+    ),
+  );
+  console.log(
+    "Verified SELECT/INSERT actual plans, committed INSERT persistence, failure rollback and cancellation before execution.",
   );
 });

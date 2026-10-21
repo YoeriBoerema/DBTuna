@@ -4,15 +4,19 @@ import {
   validateBatch,
 } from "../../../packages/plan-core/src/batch";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
+import { validateTsql } from "../sql/sqlServerSelection";
 import { validateSql } from "../sql/statementSelection";
-export function prepareBatch(statements: string[]): PlanBatch {
+export function prepareBatch(
+  statements: string[],
+  type: "postgresql" | "sqlserver" = "postgresql",
+): PlanBatch {
   return validateBatch({
     kind: "dbtuna-batch",
     schemaVersion: "1.0",
     id: randomUUID(),
     items: statements.map((sql, i) => {
       try {
-        validateSql(sql);
+        (type === "sqlserver" ? validateTsql : validateSql)(sql);
         return { index: i + 1, sql, status: "pending" };
       } catch (e) {
         return {
@@ -27,7 +31,10 @@ export function prepareBatch(statements: string[]): PlanBatch {
 }
 export async function explainBatch(
   initial: PlanBatch,
-  collect: (sql: string, signal: AbortSignal) => Promise<QueryPlan>,
+  collect: (
+    sql: string,
+    signal: AbortSignal,
+  ) => Promise<QueryPlan | QueryPlan[]>,
   signal: AbortSignal,
   onUpdate: (batch: PlanBatch) => void,
 ) {
@@ -57,19 +64,34 @@ export async function explainBatch(
     update(i, { status: "running" });
     try {
       const collected = await collect(batch.items[i].sql, signal);
-      const plan = { ...collected, id: `${batch.id}:${i + 1}` };
+      const plans = Array.isArray(collected) ? collected : [collected];
+      if (!plans.length) throw Error("No statement plans returned.");
       if (signal.aborted) {
         update(i, { status: "cancelled", error: "Batch cancelled." });
         continue;
       }
-      const candidate = {
-        ...batch,
-        items: batch.items.map((item, index) =>
-          index === i ? { ...item, status: "complete" as const, plan } : item,
-        ),
-      };
-      validateBatch(candidate);
-      update(i, { status: "complete", plan });
+      const original = batch.items[i];
+      const results = plans.map((plan) => ({
+        index: 0,
+        sql: plan.query || original.sql,
+        status: "complete" as const,
+        plan,
+      }));
+      const items = [
+        ...batch.items.slice(0, i),
+        ...results,
+        ...batch.items.slice(i + 1),
+      ].map((item, index) => ({
+        ...item,
+        index: index + 1,
+        ...(item.plan
+          ? { plan: { ...item.plan, id: `${batch.id}:${index + 1}` } }
+          : {}),
+      }));
+      const candidate = validateBatch({ ...batch, items });
+      batch = candidate;
+      onUpdate(batch);
+      i += plans.length - 1;
     } catch (e) {
       update(i, {
         status: signal.aborted ? "cancelled" : "error",
@@ -82,4 +104,19 @@ export async function explainBatch(
     }
   }
   return batch;
+}
+
+export function completedBatch(plans: QueryPlan[]): PlanBatch {
+  const id = randomUUID();
+  return validateBatch({
+    kind: "dbtuna-batch",
+    schemaVersion: "1.0",
+    id,
+    items: plans.map((plan, index) => ({
+      index: index + 1,
+      sql: plan.query || "",
+      status: "complete",
+      plan: { ...plan, id: `${id}:${index + 1}` },
+    })),
+  });
 }
