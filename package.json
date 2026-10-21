@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL and SQL Server execution plans beside your SQL.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {
@@ -29,7 +29,7 @@
     "test": "tsx --test test/unit/*.test.ts",
     "test:postgres": "tsx --test test/integration/*.test.ts",
     "test:vscode": "node test/vscode/run.cjs",
-    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.6.1.vsix",
+    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.6.2.vsix",
     "lint": "eslint src packages webview test/unit test/integration",
     "test:embedded": "node test/integration/embedded.mjs",
     "format": "prettier --write src packages webview test *.json *.mjs"

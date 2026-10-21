@@ -725,15 +725,6 @@ function ExecutablePlan(props: React.ComponentProps<typeof PlanWorkspace>) {
             Cancel execution
           </button>
         )}
-        {actual && (
-          <button
-            onClick={() =>
-              api.postMessage({ type: "EXPORT_ACTUAL", planId: plan.id })
-            }
-          >
-            Export actual plan
-          </button>
-        )}
         <span role="status">
           {status === "confirming"
             ? "Awaiting confirmation..."
@@ -813,7 +804,7 @@ function App() {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [revision, setRevision] = useState(0),
-    [fitRevision, setFitRevision] = useState(0);
+    [fitRevision] = useState(0);
   const { plan, batch } = content;
   const firstPlan = plan || batch?.items.find((item) => item.plan)?.plan;
   const running = !!batch?.items.some(
@@ -899,33 +890,26 @@ function App() {
             <option value="compact">Compact horizontal</option>
             <option value="cards">Cards · top down</option>
           </select>
-          <button onClick={() => api.postMessage({ type: "IMPORT_PLAN" })}>
-            Import
-          </button>
           <button
             disabled={!firstPlan}
             onClick={() => setRevision((v) => v + 1)}
           >
             Auto layout
           </button>
-          <button
-            disabled={!firstPlan}
-            onClick={() => setFitRevision((v) => v + 1)}
-          >
-            Fit view
-          </button>
           {running && (
             <button onClick={() => api.postMessage({ type: "CANCEL_BATCH" })}>
               Cancel batch
             </button>
           )}
-          <button
-            className="primary"
-            disabled={!plan && !batch}
-            onClick={() => api.postMessage({ type: "EXPORT_PLAN" })}
-          >
-            {batch && batch.items.length > 1 ? "Export batch ↗" : "Export ↗"}
-          </button>
+          {(!batch || batch.items.length <= 1) && (
+            <button
+              className="primary"
+              disabled={!plan && !batch}
+              onClick={() => api.postMessage({ type: "EXPORT_PLAN" })}
+            >
+              Export ↗
+            </button>
+          )}
         </div>
       </header>
       {error && (
@@ -1044,9 +1028,6 @@ function App() {
               onClick={() => api.postMessage({ type: "LOAD_SAMPLE" })}
             >
               Explore sample plan →
-            </button>
-            <button onClick={() => api.postMessage({ type: "IMPORT_PLAN" })}>
-              Import JSON
             </button>
           </div>
           <small>Or select SQL and run “DBTuna: Explain Query”</small>

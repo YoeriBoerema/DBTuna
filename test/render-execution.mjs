@@ -156,17 +156,8 @@ try {
     .locator(".operator")
     .getByText("Actual rows: 10", { exact: true })
     .waitFor();
-  await first
-    .getByRole("button", { name: "Export actual plan", exact: true })
-    .click();
-  if (
-    !(await page.evaluate(() =>
-      window.__messages.some(
-        (m) => m.type === "EXPORT_ACTUAL" && m.planId === "runtime-select",
-      ),
-    ))
-  )
-    throw Error("Actual export not routed");
+  if (await first.getByRole("button", { name: "Export actual plan", exact: true }).count())
+    throw Error("Removed actual export control is still visible");
   if (
     !(await second
       .getByRole("tab", { name: "Actual", exact: true })
@@ -251,7 +242,7 @@ try {
   await page.screenshot({ path: "media/actual-plan.png" });
   if (errors.length) throw Error(errors.join("\n"));
   console.log(
-    "Actual-plan UI: explicit per-query execution, estimated/actual toggle, measured rows, elapsed state, cancellation, errors, export and offline guard verified.",
+    "Actual-plan UI: explicit per-query execution, estimated/actual toggle, measured rows, elapsed state, cancellation, errors and offline guard verified.",
   );
 } finally {
   await browser.close();

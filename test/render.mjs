@@ -132,13 +132,6 @@ try {
     ))
   )
     throw Error("Export handshake failed");
-  await page.getByRole("button", { name: "Import", exact: true }).click();
-  if (
-    !(await page.evaluate(() =>
-      window.__messages.some((m) => m.type === "IMPORT_PLAN"),
-    ))
-  )
-    throw Error("Import handshake failed");
   const lightTheme = await page.addStyleTag({
     content:
       ":root{--vscode-foreground:#202020;--vscode-editor-background:#ffffff;--vscode-editorWidget-background:#f5f5f5;--vscode-sideBar-background:#f3f3f3;--vscode-panel-border:#c7c7c7;--vscode-descriptionForeground:#555;--vscode-button-secondaryBackground:#dedede;--vscode-button-secondaryForeground:#202020}",
@@ -192,7 +185,6 @@ try {
     .locator(".operator strong")
     .filter({ hasText: /^Insert$/ })
     .waitFor();
-  await page.getByRole("button", { name: "Fit view", exact: true }).click();
   await page.waitForTimeout(200);
   await page.screenshot({ path: "media/horizontal-plan.png" });
   const batch = {
@@ -275,7 +267,8 @@ try {
   )
     throw Error("Full query SQL preview missing");
   await query2.locator(".query-sql summary").click();
-  await page.getByRole("button", { name: "Export batch" }).click();
+  if (await page.getByRole("button", { name: /Export batch|Fit view|^Import$/ }).count())
+    throw Error("Removed toolbar controls are still visible");
   await page.getByRole("combobox", { name: "Plan view" }).selectOption("cards");
   await query1.locator(".operator:not(.compact)").first().waitFor();
   await query2.locator(".operator:not(.compact)").first().waitFor();
