@@ -1,6 +1,8 @@
 import { XMLParser, XMLValidator, XMLBuilder } from "fast-xml-parser";
 import { decodeXmlValue } from "./xmlValues";
 const xmlValueOptions = {
+  // Showplan adds wrapper elements around each operator in a deep join tree.
+  maxNestedTags: 512,
   processEntities: false,
   attributeValueProcessor: (_name: string, value: string) =>
     decodeXmlValue(value),
@@ -100,6 +102,7 @@ export class SqlServerAdapter implements QueryPlanAdapter {
     if (statements.length > 20)
       throw Error("Explain at most 20 statements at a time.");
     const builder = new XMLBuilder({
+      maxNestedTags: 512,
       ignoreAttributes: false,
       suppressBooleanAttributes: false,
     });

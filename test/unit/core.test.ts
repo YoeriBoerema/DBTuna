@@ -51,7 +51,7 @@ test("invalid and bounded imports", () => {
   for (const v of [null, [], [{}], [{ Plan: {} }], "{"])
     assert.throws(() => adapter.parse(v));
   let v: unknown = {};
-  for (let i = 0; i < 70; i++) v = { x: v };
+  for (let i = 0; i < 513; i++) v = { x: v };
   assert.throws(() => bounded(v));
   assert.throws(() => bounded(" ".repeat(6 * 1024 * 1024)));
 });

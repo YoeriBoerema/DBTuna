@@ -58,6 +58,21 @@ test("XML rejects malformed, entity declarations, excessive depth, invalid metri
   );
   assert.throws(() => adapter.parse("<ShowPlanXML/>"));
 });
+test("deep Showplan operator trees parse and split within bounded limits", () => {
+  const operator = '<RelOp PhysicalOp="Nested Loops" EstimateRows="1"><NestedLoops>';
+  const makePlan = (depth: number) =>
+    '<ShowPlanXML><BatchSequence><Batch><Statements><StmtSimple StatementText="SELECT 1"><QueryPlan>' +
+    operator.repeat(depth) + '<RelOp PhysicalOp="Constant Scan" />' +
+    '</NestedLoops></RelOp>'.repeat(depth) +
+    '</QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>';
+  const adapter = new SqlServerAdapter();
+  const plan = adapter.parseStatements(makePlan(80))[0];
+  assert.equal(plan.nodes.length, 81);
+  assert.equal(plan.edges.length, 80);
+  assert.equal(validate(JSON.stringify(plan)).nodes.length, 81);
+  assert.throws(() => adapter.parseStatements(makePlan(300)), /nested tags|nesting/i);
+});
+
 test("T-SQL preserves dependent statements; GO only separates outside quoted content and comments", () => {
   const text =
     "DECLARE @x int=1; SELECT @x;\nGO -- next batch\nSELECT '[x;]'; /* GO */\nGO\nSELECT N'hello\nGO\nworld' AS [GO];";

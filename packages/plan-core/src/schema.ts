@@ -90,7 +90,7 @@ export function bounded(input: unknown): unknown {
   }
   let count = 0;
   const walk = (v: unknown, d: number) => {
-    if (d > 64 || ++count > 150000)
+    if (d > 512 || ++count > 150000)
       throw Error("Plan exceeds nesting or size limits.");
     if (v && typeof v === "object")
       for (const x of Object.values(v)) walk(x, d + 1);
