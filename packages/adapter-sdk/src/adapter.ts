@@ -4,4 +4,5 @@ export interface QueryPlanAdapter {
   readonly displayName: string;
   canParse(input: unknown): boolean;
   parse(input: unknown): QueryPlan;
+  parseStatements?(input: unknown): QueryPlan[];
 }

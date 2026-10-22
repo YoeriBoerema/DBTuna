@@ -106,3 +106,10 @@ Final MVP checks: 58 unit tests, TypeScript, ESLint, production build, VS Code 1
 ## SQL Server XML line breaks - 0.6.1
 
 Confirmed fast-xml-parser left numeric XML character references in StatementText. Their semicolons reached execution validation and incorrectly disabled the Run action. Attribute/text values now decode XML predefined and numeric references exactly once with parser entity processing disabled, in both the original and per-statement parse paths. Invalid XML code points are rejected. Regression tests cover the reported three join queries with hexadecimal/decimal CRLF references, execution validation, named entities, supplementary Unicode characters and escaped entity-looking SQL literals without double decoding. A browser check verifies real line breaks in the SQL preview. Existing cached/canonical plans are not rewritten; a fresh Explain regenerates corrected statement text.
+
+
+## 0.6.5 maintainability verification (22 October 2026)
+
+Use `npm run verify` to run TypeScript, lint, unit tests, builds and all browser checks through the shared harness. Add `-- --postgres --vscode` for disposable PostgreSQL integration and VS Code activation. Set `DBTUNA_BROWSER` and `VSCODE_EXECUTABLE` when using installed executables; otherwise the corresponding tools require their usual browser/VS Code setup. Browser assertions do not write tracked media. After building, `npm run screenshots` explicitly regenerates the existing screenshots.
+
+The additional regressions cover single-pass Showplan parsing, whole-document operator bounds, profile migration and secret separation, field-based connection identity, invalid-profile persistence, stale asynchronous replies and operation-specific AI timeouts. Live OpenAI requests remain mocked; live SQL Server testing remains opt-in.

@@ -1,18 +1,9 @@
-﻿import { build } from "esbuild";
-import { createRequire } from "node:module";
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { chromium } from "playwright";
-await build({
-  entryPoints: ["packages/adapter-postgres/src/postgresAdapter.ts"],
-  outfile: "work/runtime-adapter.cjs",
-  bundle: true,
-  platform: "node",
-  format: "cjs",
-});
-const require = createRequire(import.meta.url);
-const { PostgresAdapter } = require("../work/runtime-adapter.cjs");
+import {
+  loadAdapter,
+  openPreview,
+  screenshot,
+} from "./helpers/browserHarness.mjs";
+const { PostgresAdapter } = await loadAdapter("postgres");
 const adapter = new PostgresAdapter();
 const estimated = adapter.parse([
   {
@@ -26,7 +17,7 @@ const estimated = adapter.parse([
 ]);
 estimated.id = "runtime-select";
 estimated.query = "SELECT * FROM customers;";
-estimated.metadata.executionAvailable = true;
+estimated.application.executionAvailable = true;
 const insert = adapter.parse([
   {
     Plan: {
@@ -39,11 +30,11 @@ const insert = adapter.parse([
 ]);
 insert.id = "runtime-insert";
 insert.query = "INSERT INTO customers VALUES (1);";
-insert.metadata.executionAvailable = true;
+insert.application.executionAvailable = true;
 const offline = {
   ...estimated,
   id: "offline",
-  metadata: { executionAvailable: false },
+  application: { executionAvailable: false },
 };
 const batch = {
   kind: "dbtuna-batch",
@@ -71,26 +62,34 @@ const actual = adapter.parse([
 ]);
 actual.id = "runtime-select:actual";
 actual.query = estimated.query;
-actual.metadata.planKind = "actual";
-writeFileSync(
-  "work/runtime-preview.html",
-  `<html><head><link rel="stylesheet" href="../dist/webview.css"></head><body><div id="root"></div><script>window.__messages=[];window.__state={batch:${JSON.stringify(batch)}};window.acquireVsCodeApi=()=>({getState:()=>window.__state,setState:s=>window.__state=s,postMessage:m=>window.__messages.push(m)})</script><script src="../dist/webview.js"></script></body></html>`,
-);
-const browser = await chromium.launch({
-  executablePath: process.env.DBTUNA_BROWSER,
-  headless: true,
+actual.application.planKind = "actual";
+const { browser, page, errors } = await openPreview({
+  name: "render-execution",
+  state: { batch },
+  viewport: { width: 1600, height: 1050 },
 });
 try {
-  const page = await browser.newPage({
-    viewport: { width: 1600, height: 1050 },
-  });
-  const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(pathToFileURL(resolve("work/runtime-preview.html")).href);
   const first = page.getByRole("region", { name: "Query 1", exact: true }),
     second = page.getByRole("region", { name: "Query 2", exact: true }),
     third = page.getByRole("region", { name: "Query 3", exact: true });
   await first.locator(".operator").first().waitFor();
+  if (
+    !(await first
+      .getByRole("button", {
+        name: "Run query and collect actual plan",
+        exact: true,
+      })
+      .isDisabled())
+  )
+    throw Error(
+      "Restored snapshot enabled execution before a live host update",
+    );
+  await page.evaluate(
+    (batch) =>
+      window.postMessage({ type: "BATCH_LOADED", payload: batch }, "*"),
+    batch,
+  );
+
   if (
     await page.evaluate(() =>
       window.__messages.some((message) => message.type === "RUN_ACTUAL"),
@@ -156,7 +155,11 @@ try {
     .locator(".operator")
     .getByText("Actual rows: 10", { exact: true })
     .waitFor();
-  if (await first.getByRole("button", { name: "Export actual plan", exact: true }).count())
+  if (
+    await first
+      .getByRole("button", { name: "Export actual plan", exact: true })
+      .count()
+  )
     throw Error("Removed actual export control is still visible");
   if (
     !(await second
@@ -239,7 +242,7 @@ try {
     ))
   )
     throw Error("Runtime toolbar clipped the plan footer");
-  await page.screenshot({ path: "media/actual-plan.png" });
+  await screenshot(page, { path: "media/actual-plan.png" });
   if (errors.length) throw Error(errors.join("\n"));
   console.log(
     "Actual-plan UI: explicit per-query execution, estimated/actual toggle, measured rows, elapsed state, cancellation, errors and offline guard verified.",

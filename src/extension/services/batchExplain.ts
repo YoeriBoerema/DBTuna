@@ -4,8 +4,7 @@ import {
   validateBatch,
 } from "../../../packages/plan-core/src/batch";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
-import { validateTsql } from "../sql/sqlServerSelection";
-import { validateSql } from "../sql/statementSelection";
+import { databaseConnector } from "../connectors/registry";
 export function prepareBatch(
   statements: string[],
   type: "postgresql" | "sqlserver" = "postgresql",
@@ -16,7 +15,7 @@ export function prepareBatch(
     id: randomUUID(),
     items: statements.map((sql, i) => {
       try {
-        (type === "sqlserver" ? validateTsql : validateSql)(sql);
+        databaseConnector(type).validate(sql);
         return { index: i + 1, sql, status: "pending" };
       } catch (e) {
         return {
@@ -37,16 +36,17 @@ export async function explainBatch(
   ) => Promise<QueryPlan | QueryPlan[]>,
   signal: AbortSignal,
   onUpdate: (batch: PlanBatch) => void,
+  onPlan?: (plan: QueryPlan, sourceSql: string) => void,
 ) {
   let batch = initial;
   const update = (
     index: number,
-    change: Partial<PlanBatch["items"][number]>,
+    change: { status: "running" } | { status: "error" | "cancelled"; error: string },
   ) => {
     batch = {
       ...batch,
       items: batch.items.map((item, i) =>
-        i === index ? { ...item, ...change } : item,
+        i === index ? { index: item.index, sql: item.sql, ...change } : item,
       ),
     };
     onUpdate(batch);
@@ -90,6 +90,8 @@ export async function explainBatch(
       }));
       const candidate = validateBatch({ ...batch, items });
       batch = candidate;
+      for (const item of batch.items.slice(i, i + plans.length))
+        if (item.plan) onPlan?.(item.plan, original.sql);
       onUpdate(batch);
       i += plans.length - 1;
     } catch (e) {

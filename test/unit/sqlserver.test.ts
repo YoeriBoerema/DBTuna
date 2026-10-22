@@ -1,3 +1,4 @@
+import { XMLParser } from "fast-xml-parser";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -59,18 +60,23 @@ test("XML rejects malformed, entity declarations, excessive depth, invalid metri
   assert.throws(() => adapter.parse("<ShowPlanXML/>"));
 });
 test("deep Showplan operator trees parse and split within bounded limits", () => {
-  const operator = '<RelOp PhysicalOp="Nested Loops" EstimateRows="1"><NestedLoops>';
+  const operator =
+    '<RelOp PhysicalOp="Nested Loops" EstimateRows="1"><NestedLoops>';
   const makePlan = (depth: number) =>
     '<ShowPlanXML><BatchSequence><Batch><Statements><StmtSimple StatementText="SELECT 1"><QueryPlan>' +
-    operator.repeat(depth) + '<RelOp PhysicalOp="Constant Scan" />' +
-    '</NestedLoops></RelOp>'.repeat(depth) +
-    '</QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>';
+    operator.repeat(depth) +
+    '<RelOp PhysicalOp="Constant Scan" />' +
+    "</NestedLoops></RelOp>".repeat(depth) +
+    "</QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>";
   const adapter = new SqlServerAdapter();
   const plan = adapter.parseStatements(makePlan(80))[0];
   assert.equal(plan.nodes.length, 81);
   assert.equal(plan.edges.length, 80);
   assert.equal(validate(JSON.stringify(plan)).nodes.length, 81);
-  assert.throws(() => adapter.parseStatements(makePlan(300)), /nested tags|nesting/i);
+  assert.throws(
+    () => adapter.parseStatements(makePlan(300)),
+    /nested tags|nesting/i,
+  );
 });
 
 test("T-SQL preserves dependent statements; GO only separates outside quoted content and comments", () => {
@@ -148,6 +154,7 @@ test("typed profiles exclude secrets; SQL Server TLS and explicit NTLM configura
     user: "reader",
     ssl: "verify",
   });
+  assert.ok(p.type === "sqlserver");
   assert.equal(
     sqlServerConfig(p, "secret").options?.trustServerCertificate,
     false,
@@ -358,5 +365,41 @@ test("XML values decode exactly once without changing entity-looking SQL literal
     new SqlServerAdapter().parseStatements(String(plan.metadata.nativeXml))[0]
       .query,
     plan.query,
+  );
+});
+
+test("statement extraction parses XML once and preserves scoped native XML without double decoding", (context) => {
+  const parse = context.mock.method(XMLParser.prototype, "parse");
+  const plans = new SqlServerAdapter().parseStatements(xml);
+  assert.equal(parse.mock.callCount(), 1);
+  assert.equal(plans.length, 2);
+  assert.equal(
+    String(plans[0].metadata.nativeXml).includes('StatementId="2"'),
+    false,
+  );
+  assert.equal(
+    String(plans[1].metadata.nativeXml).includes('StatementId="1"'),
+    false,
+  );
+});
+
+test("statement splitting enforces the operator budget across the entire native document", () => {
+  const nodes = Array.from(
+    { length: 600 },
+    (_, index) =>
+      `<RelOp NodeId="${index}" PhysicalOp="Constant Scan"><ConstantScan/></RelOp>`,
+  ).join("");
+  const statements = [1, 2]
+    .map(
+      (id) =>
+        `<StmtSimple StatementId="${id}" StatementText="SELECT 1" StatementType="SELECT"><QueryPlan>${nodes}</QueryPlan></StmtSimple>`,
+    )
+    .join("");
+  assert.throws(
+    () =>
+      new SqlServerAdapter().parseStatements(
+        `<ShowPlanXML><BatchSequence><Batch><Statements>${statements}</Statements></Batch></BatchSequence></ShowPlanXML>`,
+      ),
+    /1000 operators/,
   );
 });

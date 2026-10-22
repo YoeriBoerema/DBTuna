@@ -1,16 +1,16 @@
+import { DATABASE_TIMEOUTS } from "../../../packages/plan-core/src/limits";
 import { Client, ClientConfig } from "pg";
 import { validateSql } from "../sql/statementSelection";
 import type { Profile } from "./profile";
-export type { Profile } from "./profile";
 export async function withClient<T>(
   config: ClientConfig,
   action: (c: Client) => Promise<T>,
   signal?: AbortSignal,
-  timeoutMs = 12000,
+  timeoutMs: number = DATABASE_TIMEOUTS.postgresEstimateClientMs,
 ): Promise<T> {
   const client = new Client({
     ...config,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: DATABASE_TIMEOUTS.connectMs,
     query_timeout: timeoutMs,
   });
   const abort = () => {
@@ -51,7 +51,9 @@ export async function collectPlan(
     async (client) => {
       await client.query("BEGIN READ ONLY");
       try {
-        await client.query("SET LOCAL statement_timeout = '10000ms'");
+        await client.query(
+          `SET LOCAL statement_timeout = '${DATABASE_TIMEOUTS.estimateStatementMs}ms'`,
+        );
         const version = await client.query("SHOW server_version");
         const result = await client.query(
           "EXPLAIN (FORMAT JSON, VERBOSE TRUE, COSTS TRUE) " + query,
@@ -79,8 +81,12 @@ export async function collectActualPlan(
     async (client) => {
       await client.query("BEGIN");
       try {
-        await client.query("SET LOCAL statement_timeout = '30000ms'");
-        await client.query("SET LOCAL lock_timeout = '5000ms'");
+        await client.query(
+          `SET LOCAL statement_timeout = '${DATABASE_TIMEOUTS.actualStatementMs}ms'`,
+        );
+        await client.query(
+          `SET LOCAL lock_timeout = '${DATABASE_TIMEOUTS.lockMs}ms'`,
+        );
         const version = await client.query("SHOW server_version");
         const result = await client.query(
           "EXPLAIN (ANALYZE TRUE, BUFFERS TRUE, FORMAT JSON, VERBOSE TRUE, COSTS TRUE) " +
@@ -98,6 +104,6 @@ export async function collectActualPlan(
       }
     },
     signal,
-    35000,
+    DATABASE_TIMEOUTS.postgresActualClientMs,
   );
 }

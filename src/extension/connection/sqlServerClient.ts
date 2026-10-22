@@ -1,3 +1,7 @@
+import {
+  PLAN_LIMITS,
+  DATABASE_TIMEOUTS,
+} from "../../../packages/plan-core/src/limits";
 import { Connection, Request, type ConnectionConfiguration } from "tedious";
 import type { Profile } from "./profile";
 import { validateTsql } from "../sql/sqlServerSelection";
@@ -20,9 +24,9 @@ export function sqlServerConfig(
       port: p.port,
       encrypt: p.ssl !== "disable",
       trustServerCertificate: p.ssl === "trust",
-      connectTimeout: 5000,
-      requestTimeout: 10000,
-      cancelTimeout: 2000,
+      connectTimeout: DATABASE_TIMEOUTS.connectMs,
+      requestTimeout: DATABASE_TIMEOUTS.estimateStatementMs,
+      cancelTimeout: DATABASE_TIMEOUTS.cancelMs,
       appName: "DBTuna",
     },
   };
@@ -37,7 +41,7 @@ export async function withSqlServer<T>(
     ) => Promise<unknown[][]>,
   ) => Promise<T>,
   signal?: AbortSignal,
-  timeoutMs = 10000,
+  timeoutMs: number = DATABASE_TIMEOUTS.estimateStatementMs,
 ): Promise<T> {
   const config = sqlServerConfig(p, password);
   config.options = { ...config.options, requestTimeout: timeoutMs };
@@ -81,7 +85,7 @@ export async function withSqlServer<T>(
             (c: { value: unknown }) => c.value as unknown,
           );
           bytes += Buffer.byteLength(JSON.stringify(values));
-          if (bytes > 5 * 1024 * 1024) {
+          if (bytes > PLAN_LIMITS.bytes) {
             reject(Error("Plan exceeds 5 MiB."));
             connection.close();
           } else rows.push(values);
@@ -156,7 +160,7 @@ export async function actualSqlServerSession(
         (value): value is string =>
           typeof value === "string" && value.includes("ShowPlanXML"),
       );
-    if (!documents.length || documents.length > 20)
+    if (!documents.length || documents.length > PLAN_LIMITS.actualDocuments)
       throw Error(
         "Query ran but no single actual plan was returned. Data may already have changed; do not retry blindly.",
       );
@@ -179,6 +183,6 @@ export async function collectActualSqlServerPlan(
     password,
     (query) => actualSqlServerSession(query, sql, signal),
     signal,
-    30000,
+    DATABASE_TIMEOUTS.actualStatementMs,
   );
 }

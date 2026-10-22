@@ -1,20 +1,21 @@
-﻿import { test } from "node:test";
+import { advicePayload } from "../../src/extension/ai/advicePayload";
+import { formatAdvice as presentAdvice } from "../../webview/src/advicePresentation";
+import { parseAdvice } from "../../packages/plan-core/src/advice";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PostgresAdapter } from "../../packages/adapter-postgres/src/postgresAdapter";
-import {
-  advicePayload,
-  formatAdvice,
-  requestAdvice,
-  listModels,
-} from "../../src/extension/ai/openaiClient";
+import { requestAdvice, listModels } from "../../src/extension/ai/openaiClient";
 import { webviewMessageSchema } from "../../src/extension/webview/messages";
+const formatAdvice = (value: unknown) => presentAdvice(parseAdvice(value));
 const plan = () => {
   const p = new PostgresAdapter().parse(
     JSON.parse(readFileSync("fixtures/postgres/nested-loop.json", "utf8")),
   );
   p.query = "SELECT * FROM customers";
-  p.metadata.connectionLabel = "private-host";
+  p.application.connectionLabel = "private-host";
+  p.application.planKind = "actual";
+  p.application.clientElapsedMs = 123;
   p.metadata.batchSql = "SELECT secret FROM unrelated";
   p.metadata.nativeXml = "duplicate";
   return p;
@@ -34,6 +35,10 @@ test("AI payload includes selected query, engine, complete plan and operator; ex
   assert.equal(value.database.engine, "postgresql");
   assert.equal(value.query, p.query);
   assert.equal(value.plan.nodes.length, p.nodes.length);
+  assert.deepEqual(value.plan.application, {
+    planKind: "actual",
+    clientElapsedMs: 123,
+  });
   assert.equal(value.context, "Focus on latency");
   assert.ok(!text.includes("private-host"));
   assert.ok(!text.includes("unrelated"));
@@ -114,14 +119,13 @@ test("OpenAI Responses request uses host authorization, store=false, no tools, a
     }),
   );
   assert.equal(calls, 1);
-  assert.match(result.text, /^Score: 75\/100/);
-  assert.match(result.text, /Suggestions\n-/);
+  assert.match(formatAdvice(result.advice), /^Score: 75\/100/);
+  assert.match(formatAdvice(result.advice), /Suggestions\n-/);
   assert.match(
-    result.text,
+    formatAdvice(result.advice),
     /Updated query \(proposed\)\nSELECT \* FROM customers/,
   );
-  assert.ok(!result.text.includes("Findings"));
-  assert.equal(result.incomplete, false);
+  assert.ok(!formatAdvice(result.advice).includes("Findings"));
 });
 test("AI errors sanitize provider bodies; incomplete/empty responses, cancellation and network failures are handled", async () => {
   const p = plan(),
@@ -294,4 +298,30 @@ test("advice formatting enforces score bounds, concise suggestions and complete 
     { ...valid, suggestions: ["x".repeat(201)] },
   ])
     assert.throws(() => formatAdvice(invalid));
+});
+
+test("OpenAI transport uses explicit operation timeouts independent of caller cancellation", async (context) => {
+  const { jsonRequest } =
+    await import("../../src/extension/ai/openaiTransport");
+  const { AI_LIMITS } = await import("../../packages/plan-core/src/limits");
+  const durations: number[] = [];
+  context.mock.method(AbortSignal, "timeout", (duration: number) => {
+    durations.push(duration);
+    return new AbortController().signal;
+  });
+  await jsonRequest(
+    "responses",
+    "test",
+    { method: "POST" },
+    undefined,
+    mock(() => Response.json({})),
+  );
+  await jsonRequest(
+    "models",
+    "test",
+    { method: "GET" },
+    new AbortController().signal,
+    mock(() => Response.json({})),
+  );
+  assert.deepEqual(durations, [AI_LIMITS.requestMs, AI_LIMITS.modelListMs]);
 });

@@ -1,3 +1,5 @@
+import type { Advice } from "../../../packages/plan-core/src/advice";
+import { SQL_LIMITS, AI_LIMITS } from "../../../packages/plan-core/src/limits";
 import { z } from "zod";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import type { PlanBatch } from "../../../packages/plan-core/src/batch";
@@ -39,11 +41,8 @@ export const webviewMessageSchema = z.discriminatedUnion("type", [
       requestId: z.string().min(1).max(100),
       planId: z.string().min(1).max(200),
       nodeId: z.string().min(1).max(200),
-      context: z.string().max(4000),
-      query: z
-        .string()
-        .max(1024 * 1024)
-        .optional(),
+      context: z.string().max(AI_LIMITS.contextCharacters),
+      query: z.string().max(SQL_LIMITS.characters).optional(),
     })
     .strict(),
   z
@@ -55,27 +54,43 @@ export const webviewMessageSchema = z.discriminatedUnion("type", [
 ]);
 export type WebviewToExtension = z.infer<typeof webviewMessageSchema>;
 export type AiRequest = Extract<WebviewToExtension, { type: "AI_ANALYZE" }>;
-export type ExtensionToWebview =
+export type ExecutionOutcome =
+  | { status: "running"; actualPlan?: never; elapsedMs?: never; error?: never }
   | {
-      type: "EXECUTION_RESULT";
-      planId: string;
-      requestId: string;
-      status: "running" | "complete" | "cancelled" | "error";
-      actualPlan?: QueryPlan;
-      elapsedMs?: number;
-      error?: string;
+      status: "complete";
+      actualPlan: QueryPlan;
+      elapsedMs: number;
+      error?: never;
     }
+  | {
+      status: "error" | "cancelled";
+      error: string;
+      actualPlan?: never;
+      elapsedMs?: never;
+    };
+export type AiOutcome =
+  | { status: "complete"; advice: Advice; model: string; error?: never }
+  | {
+      status: "error" | "cancelled";
+      error: string;
+      advice?: never;
+      model?: never;
+    };
+export type ExecutionResult = {
+  type: "EXECUTION_RESULT";
+  planId: string;
+  requestId: string;
+} & ExecutionOutcome;
+export type AiResult = {
+  type: "AI_RESULT";
+  requestId: string;
+  planId: string;
+  nodeId: string;
+} & AiOutcome;
+export type ExtensionToWebview =
+  | ExecutionResult
+  | AiResult
   | { type: "PLAN_LOADED"; payload: QueryPlan }
   | { type: "BATCH_LOADED"; payload: PlanBatch }
   | { type: "PLAN_ERROR"; message: string }
-  | { type: "LOADING"; loading: boolean }
-  | {
-      type: "AI_RESULT";
-      requestId: string;
-      planId: string;
-      nodeId: string;
-      text?: string;
-      model?: string;
-      error?: string;
-      incomplete?: boolean;
-    };
+  | { type: "LOADING"; loading: boolean };

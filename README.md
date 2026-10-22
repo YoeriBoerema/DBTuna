@@ -95,6 +95,8 @@ npm run test:vscode
 npm run package
 ```
 
+Run `npm run verify` for type checks, lint, unit tests, both builds and all browser checks. First install a browser with `npx playwright install chromium`, or set `DBTUNA_BROWSER` to an existing Chromium-family executable. `npm run verify -- --postgres --vscode` also runs the disposable PostgreSQL and VS Code activation checks. Routine verification never updates tracked screenshots; use `npm run screenshots` explicitly to regenerate them after building.
+
 Press F5 to launch the configured Extension Development Host. pnpm is also supported (`pnpm install`, then `pnpm run …`). Package code is bundled; the installed extension does not require node_modules.
 
 For a real isolated database integration test, run `node test/integration/embedded.mjs`. This uses the development-only embedded-postgres binary package, a localhost-only test server on port 55439 and test credentials. Alternatively, provide your own disposable test PostgreSQL server with the test credentials in `test/integration/postgres.test.ts` and run `npm run test:postgres`. Never point these tests at production.

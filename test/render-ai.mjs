@@ -1,18 +1,10 @@
-﻿import { build } from "esbuild";
-import { createRequire } from "node:module";
-import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { chromium } from "playwright";
-await build({
-  entryPoints: ["packages/adapter-sqlserver/src/sqlServerAdapter.ts"],
-  outfile: "work/ai-adapter.cjs",
-  bundle: true,
-  platform: "node",
-  format: "cjs",
-});
-const require = createRequire(import.meta.url);
-const { SqlServerAdapter } = require("../work/ai-adapter.cjs");
+import { readFileSync } from "node:fs";
+import {
+  loadAdapter,
+  openPreview,
+  screenshot,
+} from "./helpers/browserHarness.mjs";
+const { SqlServerAdapter } = await loadAdapter("sqlserver");
 const plans = new SqlServerAdapter().parseStatements(
   readFileSync("fixtures/sqlserver/multi-statement.sqlplan", "utf8"),
 );
@@ -27,21 +19,12 @@ const batch = {
     plan,
   })),
 };
-writeFileSync(
-  "work/ai-preview.html",
-  `<html><head><link rel="stylesheet" href="../dist/webview.css"></head><body><div id="root"></div><script>window.__messages=[];window.__state={batch:${JSON.stringify(batch)}};window.acquireVsCodeApi=()=>({getState:()=>window.__state,setState:s=>window.__state=s,postMessage:m=>window.__messages.push(m)})</script><script src="../dist/webview.js"></script></body></html>`,
-);
-const browser = await chromium.launch({
-  executablePath: process.env.DBTUNA_BROWSER,
-  headless: true,
+const { browser, page, errors } = await openPreview({
+  name: "render-ai",
+  state: { batch },
+  viewport: { width: 1600, height: 1000 },
 });
 try {
-  const page = await browser.newPage({
-    viewport: { width: 1600, height: 1000 },
-  });
-  const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(pathToFileURL(resolve("work/ai-preview.html")).href);
   const first = page.getByRole("region", { name: "Query 1", exact: true });
   const second = page.getByRole("region", { name: "Query 2", exact: true });
   await first.locator(".operator").first().waitFor();
@@ -78,8 +61,14 @@ try {
     requestId: request.requestId,
     planId: request.planId,
     nodeId: request.nodeId,
+    status: "complete",
     model: "test-model",
-    text: "Score: 75/100 (AI estimate). Some opportunities remain.\n\nSuggestions\n- Check existing indexes. <img src=x onerror=alert(1)>\n\nUpdated query (proposed)\nSELECT 1;",
+    advice: {
+      score: 75,
+      scoreReason: "Some opportunities remain.",
+      suggestions: ["Check existing indexes. <img src=x onerror=alert(1)>"],
+      updatedQuery: "SELECT 1;",
+    },
   };
   await page.evaluate(
     (m) => window.postMessage({ ...m, requestId: "stale" }, "*"),
@@ -126,7 +115,8 @@ try {
         {
           ...m,
           requestId: m.requestId,
-          text: undefined,
+          status: "error",
+          advice: undefined,
           error: "API key was rejected.",
         },
         "*",
@@ -170,7 +160,7 @@ try {
     )
   )
     throw Error("Advice persisted into saved plan state");
-  await page.screenshot({ path: "media/ai-assistance.png" });
+  await screenshot(page, { path: "media/ai-assistance.png" });
   if (errors.length) throw Error(errors.join("\n"));
   console.log(
     "AI UI: explicit requests, operator/context scope, plain-text rendering, stale replies, independent query results, cancellation, settings and ephemeral advice verified.",

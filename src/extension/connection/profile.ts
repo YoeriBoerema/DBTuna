@@ -1,25 +1,51 @@
 import { z } from "zod";
-export const profileSchema = z
+const common = {
+  id: z.string().min(1),
+  name: z.string().min(1),
+  host: z.string().min(1),
+  port: z.number().int().min(1).max(65535),
+  database: z.string().min(1),
+  user: z.string().min(1),
+};
+const postgresProfileSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    type: z.enum(["postgresql", "sqlserver"]),
-    host: z.string().min(1),
-    port: z.number().int().min(1).max(65535),
-    database: z.string().min(1),
-    user: z.string().min(1),
+    ...common,
+    type: z.literal("postgresql"),
+    ssl: z.enum(["disable", "verify"]),
+    authentication: z.never().optional(),
+    domain: z.never().optional(),
+  })
+  .strict();
+const sqlServerProfileSchema = z
+  .object({
+    ...common,
+    type: z.literal("sqlserver"),
     ssl: z.enum(["disable", "verify", "trust"]),
     authentication: z.enum(["default", "ntlm"]).optional(),
     domain: z.string().optional(),
   })
   .strict()
-  .superRefine((p, ctx) => {
-    if (
-      p.type === "postgresql" &&
-      (p.ssl === "trust" || p.authentication || p.domain)
-    )
-      ctx.addIssue({ code: "custom", message: "Invalid PostgreSQL options" });
-    if (p.authentication === "ntlm" && !p.domain?.trim())
+  .superRefine((profile, ctx) => {
+    if (profile.authentication === "ntlm" && !profile.domain?.trim())
       ctx.addIssue({ code: "custom", message: "NTLM requires a domain" });
   });
+export const profileSchema = z.discriminatedUnion("type", [
+  postgresProfileSchema,
+  sqlServerProfileSchema,
+]);
 export type Profile = z.infer<typeof profileSchema>;
+// Compare only connection configuration. Field order and serialization do not define identity.
+export function sameConnection(left: Profile, right: Profile): boolean {
+  return (
+    left.id === right.id &&
+    left.name === right.name &&
+    left.type === right.type &&
+    left.host === right.host &&
+    left.port === right.port &&
+    left.database === right.database &&
+    left.user === right.user &&
+    left.ssl === right.ssl &&
+    left.authentication === right.authentication &&
+    left.domain === right.domain
+  );
+}

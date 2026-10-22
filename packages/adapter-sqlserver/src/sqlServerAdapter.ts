@@ -1,13 +1,6 @@
+import { PLAN_LIMITS } from "../../plan-core/src/limits";
 import { XMLParser, XMLValidator, XMLBuilder } from "fast-xml-parser";
 import { decodeXmlValue } from "./xmlValues";
-const xmlValueOptions = {
-  // Showplan adds wrapper elements around each operator in a deep join tree.
-  maxNestedTags: 512,
-  processEntities: false,
-  attributeValueProcessor: (_name: string, value: string) =>
-    decodeXmlValue(value),
-  tagValueProcessor: (_name: string, value: string) => decodeXmlValue(value),
-};
 import {
   bounded,
   validate,
@@ -16,6 +9,15 @@ import {
   type OperatorCategory,
 } from "../../plan-core/src/schema";
 import type { QueryPlanAdapter } from "../../adapter-sdk/src/adapter";
+const xmlValueOptions = {
+  // Showplan adds wrapper elements around each operator in a deep join tree.
+  maxNestedTags: PLAN_LIMITS.xmlDepth,
+  processEntities: false,
+  attributeValueProcessor: (_name: string, value: string) =>
+    decodeXmlValue(value),
+  tagValueProcessor: (_name: string, value: string) => decodeXmlValue(value),
+};
+
 type Native = Record<string, unknown>;
 const record = (v: unknown): v is Native =>
   !!v && typeof v === "object" && !Array.isArray(v);
@@ -67,20 +69,60 @@ function find(v: unknown, key: string): Native | undefined {
       }
   }
 }
+// Native normalization historically uses attribute names without XML parser prefixes.
+function stripAttributes(value: Native): Native {
+  const convert = (value: unknown): unknown =>
+    Array.isArray(value)
+      ? value.map(convert)
+      : record(value)
+        ? Object.fromEntries(
+            Object.entries(value).map(([key, child]) => [
+              key.startsWith("@_") ? key.slice(2) : key,
+              convert(child),
+            ]),
+          )
+        : value;
+  return convert(value) as Native;
+}
 export class SqlServerAdapter implements QueryPlanAdapter {
   readonly id = "sqlserver";
   readonly displayName = "SQL Server";
   canParse(v: unknown) {
     return typeof v === "string" && /<(?:[\w-]+:)?ShowPlanXML\b/.test(v);
   }
+  private document(input: unknown): Native {
+    if (!this.canParse(input) || typeof input !== "string")
+      throw Error("Expected SQL Server Showplan XML.");
+    if (Buffer.byteLength(input) > PLAN_LIMITS.bytes)
+      throw Error("Plan exceeds 5 MiB.");
+    if (/<!DOCTYPE|<!ENTITY/i.test(input))
+      throw Error("XML DTDs and entity declarations are not supported.");
+    if (XMLValidator.validate(input) !== true)
+      throw Error("Invalid Showplan XML.");
+    const document = bounded(
+      new XMLParser({
+        ignoreAttributes: false,
+        removeNSPrefix: true,
+        parseAttributeValue: false,
+        ...xmlValueOptions,
+      }).parse(input),
+    ) as Native;
+    const top = document.ShowPlanXML;
+    if (!record(top)) throw Error("Missing ShowPlanXML root.");
+    return top;
+  }
   parseStatements(input: unknown): QueryPlan[] {
-    const combined = this.parse(input); // Validate and bound the entire native document first.
-    const document = new XMLParser({
-      ignoreAttributes: false,
-      ...xmlValueOptions,
-      removeNSPrefix: true,
-    }).parse(input as string) as Native;
-    const top = document.ShowPlanXML as Native;
+    const top = this.document(input);
+    // Check the whole document before splitting; limits must not be bypassed by many statements.
+    let operators = 0;
+    const count = (value: unknown) => {
+      for (const child of children(value)) {
+        if (++operators > PLAN_LIMITS.operators)
+          throw Error("Maximum 1000 operators.");
+        count(child);
+      }
+    };
+    count(top);
     const statements: Native[] = [];
     const visit = (value: unknown) => {
       if (Array.isArray(value)) {
@@ -90,65 +132,55 @@ export class SqlServerAdapter implements QueryPlanAdapter {
       if (!record(value)) return;
       for (const [key, child] of Object.entries(value)) {
         if (key === "StmtSimple") {
-          for (const statement of Array.isArray(child) ? child : [child]) {
+          for (const statement of Array.isArray(child) ? child : [child])
             if (record(statement) && children(statement).length)
               statements.push(statement);
-          }
         } else visit(child);
       }
     };
     visit(top);
-    if (!statements.length) return [combined];
-    if (statements.length > 20)
+    if (!statements.length)
+      return [this.normalize(stripAttributes(top), input as string)];
+    if (statements.length > PLAN_LIMITS.statements)
       throw Error("Explain at most 20 statements at a time.");
     const builder = new XMLBuilder({
-      maxNestedTags: 512,
+      maxNestedTags: PLAN_LIMITS.xmlDepth,
       ignoreAttributes: false,
       suppressBooleanAttributes: false,
     });
     return statements.map((statement, index) => {
-      const plan = this.parse(
-        builder.build({
-          ShowPlanXML: {
-            ...top,
-            "@_xmlns":
-              "http://schemas.microsoft.com/sqlserver/2004/07/showplan",
-            BatchSequence: { Batch: { Statements: { StmtSimple: statement } } },
-          },
-        }),
+      const scoped = {
+        ...top,
+        "@_xmlns": "http://schemas.microsoft.com/sqlserver/2004/07/showplan",
+        BatchSequence: { Batch: { Statements: { StmtSimple: statement } } },
+      };
+      // Serialization preserves scoped native export data; it is never reparsed for normalization.
+      const plan = this.normalize(
+        stripAttributes(scoped),
+        builder.build({ ShowPlanXML: scoped }),
       );
       plan.id += ":" + (index + 1);
       plan.query = String(statement["@_StatementText"] ?? "");
-      plan.metadata.statementIndex = index + 1;
-      plan.metadata.statementType = String(statement["@_StatementType"] ?? "");
+      plan.application.statementIndex = index + 1;
+      plan.application.statementType = String(
+        statement["@_StatementType"] ?? "",
+      );
       return plan;
     });
   }
   parse(input: unknown): QueryPlan {
-    if (!this.canParse(input) || typeof input !== "string")
-      throw Error("Expected SQL Server Showplan XML.");
-    if (Buffer.byteLength(input) > 5 * 1024 * 1024)
-      throw Error("Plan exceeds 5 MiB.");
-    if (/<!DOCTYPE|<!ENTITY/i.test(input))
-      throw Error("XML DTDs and entity declarations are not supported.");
-    if (XMLValidator.validate(input) !== true)
-      throw Error("Invalid Showplan XML.");
-    const document = bounded(
-      new XMLParser({
-        ignoreAttributes: false,
-        attributeNamePrefix: "",
-        removeNSPrefix: true,
-        parseAttributeValue: false,
-        ...xmlValueOptions,
-      }).parse(input),
-    ) as Native;
-    const top = document.ShowPlanXML;
-    if (!record(top)) throw Error("Missing ShowPlanXML root.");
+    return this.normalize(
+      stripAttributes(this.document(input)),
+      input as string,
+    );
+  }
+  private normalize(top: Native, nativeXml: string): QueryPlan {
     const nodes: PlanNode[] = [],
       edges: QueryPlan["edges"] = [],
       roots: string[] = [];
     const walk = (raw: Native, parent?: string) => {
-      if (nodes.length >= 1000) throw Error("Maximum 1000 operators.");
+      if (nodes.length >= PLAN_LIMITS.operators)
+        throw Error("Maximum 1000 operators.");
       if (typeof raw.PhysicalOp !== "string")
         throw Error("Missing PhysicalOp.");
       const id = String(nodes.length);
@@ -237,7 +269,7 @@ export class SqlServerAdapter implements QueryPlanAdapter {
         ...(prune(top) as Native),
         costMeaning:
           "SQL Server estimated subtree cost; optimizer units, not milliseconds",
-        nativeXml: input,
+        nativeXml,
       },
     });
   }

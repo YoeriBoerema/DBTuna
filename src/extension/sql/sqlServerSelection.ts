@@ -1,3 +1,4 @@
+import { PLAN_LIMITS, SQL_LIMITS } from "../../../packages/plan-core/src/limits";
 // Mask literals, identifiers and nested comments before inspecting control tokens.
 export function maskTsql(sql: string): string {
   let result = "",
@@ -43,7 +44,7 @@ export function maskTsql(sql: string): string {
   return result;
 }
 export function validateTsql(sql: string): string {
-  if (new TextEncoder().encode(sql).length > 1024 * 1024)
+  if (new TextEncoder().encode(sql).length > SQL_LIMITS.bytes)
     throw Error("Selected SQL exceeds 1 MiB.");
   const tokens = maskTsql(sql);
   if (/:\w|\$\(/.test(tokens))
@@ -64,7 +65,7 @@ export function validateTsql(sql: string): string {
 }
 export function splitTsqlBatch(text: string, selection?: string): string[] {
   const sql = selection ?? text;
-  if (new TextEncoder().encode(sql).length > 1024 * 1024)
+  if (new TextEncoder().encode(sql).length > SQL_LIMITS.bytes)
     throw Error("Selected SQL exceeds 1 MiB.");
   const masked = maskTsql(sql);
   const result: string[] = [];
@@ -78,7 +79,7 @@ export function splitTsqlBatch(text: string, selection?: string): string[] {
   const tail = sql.slice(start).trim();
   if (maskTsql(tail).replace(/;/g, "").trim()) result.push(tail);
   if (!result.length) throw Error("Select SQL queries or open a SQL file.");
-  if (result.length > 20)
+  if (result.length > PLAN_LIMITS.statements)
     throw Error("Explain at most 20 T-SQL batches at a time.");
   return result;
 }

@@ -31,18 +31,23 @@ test("actual SQL scopes a single SELECT/INSERT and only necessary literal DECLAR
   assert.throws(() => executionQuery(pg("DELETE FROM t")));
   const plan = new SqlServerAdapter().parseStatements(xml)[0];
   plan.query = "SELECT @id;";
-  plan.metadata.batchSql =
+  let batchSql =
     "DECLARE @id int=1; SELECT 99; INSERT INTO t VALUES (99); SELECT @id;";
-  assert.equal(executionQuery(plan).sql, "DECLARE @id int=1;\nSELECT @id;");
-  plan.metadata.batchSql =
-    "DECLARE @unused int=2; DECLARE @id int=1; SELECT @id;";
-  assert.equal(executionQuery(plan).sql, "DECLARE @id int=1;\nSELECT @id;");
-  plan.metadata.batchSql = "DECLARE @id int=dbo.side_effect(); SELECT @id;";
-  assert.throws(() => executionQuery(plan), /variable setup/);
+  assert.equal(
+    executionQuery(plan, batchSql).sql,
+    "DECLARE @id int=1;\nSELECT @id;",
+  );
+  batchSql = "DECLARE @unused int=2; DECLARE @id int=1; SELECT @id;";
+  assert.equal(
+    executionQuery(plan, batchSql).sql,
+    "DECLARE @id int=1;\nSELECT @id;",
+  );
+  batchSql = "DECLARE @id int=dbo.side_effect(); SELECT @id;";
+  assert.throws(() => executionQuery(plan, batchSql), /variable setup/);
   plan.query = "SELECT * INTO new_table FROM t";
-  assert.throws(() => executionQuery(plan), /SELECT INTO/);
+  assert.throws(() => executionQuery(plan, batchSql), /SELECT INTO/);
   plan.query = "SELECT @@VERSION";
-  assert.equal(executionQuery(plan).sql, plan.query);
+  assert.equal(executionQuery(plan, batchSql).sql, plan.query);
 });
 test("SQL Server actual collection enables statistics, discards results, cleans up, and never retries", async () => {
   const calls: string[] = [];
@@ -322,4 +327,52 @@ test("SQL Server execution identifies the requested statement's actual plan amon
   assert.equal(result.status, "complete");
   assert.equal(result.actualPlan?.rootNodeIds.length, 1);
   assert.equal(result.actualPlan?.nodes[0].actuals?.rows, 12);
+});
+
+test("SQL Server run uses host-bound declarations without adding setup SQL to the displayed actual plan", async () => {
+  const profile: Profile = {
+    id: "sql-context",
+    name: "Test SQL",
+    type: "sqlserver",
+    host: "localhost",
+    port: 55440,
+    database: "test",
+    user: "test",
+    ssl: "trust",
+  };
+  const native = xml
+    .replace(/StatementText="[^"]*"/, 'StatementText="SELECT @id;"')
+    .replace(
+      "<NestedLoops>",
+      '<RunTimeInformation><RunTimeCountersPerThread Thread="0" ActualRows="12" ActualExecutions="1"/></RunTimeInformation><NestedLoops>',
+    );
+  const estimated = new SqlServerAdapter().parseStatements(xml)[0];
+  estimated.query = "SELECT @id;";
+  const messages: ExtensionToWebview[] = [];
+  const manager = new ExecutionManager(
+    { profiles: () => [profile], password: async () => "test" },
+    (message) => messages.push(message),
+    () => true,
+    {
+      trusted: () => true,
+      confirm: async (_title, detail) => {
+        assert.ok(detail.includes("DECLARE @id int=42;"));
+        return true;
+      },
+      exportPlan: async () => {},
+    },
+    async (_profile, _password, sql) => {
+      assert.equal(sql, "DECLARE @id int=42;\nSELECT @id;");
+      return { raw: native };
+    },
+  );
+  manager.register(estimated, profile, "DECLARE @id int=42; SELECT @id;");
+  assert.equal(estimated.application.executionAvailable, true);
+  await manager.run(estimated.id, "context-run");
+  const result = messages.at(-1);
+  assert.ok(result?.type === "EXECUTION_RESULT");
+  assert.equal(result.status, "complete", result.error);
+  assert.equal(result.actualPlan?.query, "SELECT @id;");
+  assert.equal(JSON.stringify(estimated).includes("DECLARE"), false);
+  assert.equal(JSON.stringify(result).includes("DECLARE"), false);
 });

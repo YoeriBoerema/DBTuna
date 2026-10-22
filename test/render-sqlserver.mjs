@@ -1,18 +1,10 @@
-﻿import { build } from "esbuild";
-import { createRequire } from "node:module";
-import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { chromium } from "playwright";
-await build({
-  entryPoints: ["packages/adapter-sqlserver/src/sqlServerAdapter.ts"],
-  outfile: "work/sqlserver-adapter.cjs",
-  bundle: true,
-  platform: "node",
-  format: "cjs",
-});
-const require = createRequire(import.meta.url);
-const { SqlServerAdapter } = require("../work/sqlserver-adapter.cjs");
+import { readFileSync } from "node:fs";
+import {
+  loadAdapter,
+  openPreview,
+  screenshot,
+} from "./helpers/browserHarness.mjs";
+const { SqlServerAdapter } = await loadAdapter("sqlserver");
 const plans = new SqlServerAdapter().parseStatements(
   readFileSync("fixtures/sqlserver/multi-statement.sqlplan", "utf8").replace(
     "SELECT * FROM dbo.Customers",
@@ -30,21 +22,12 @@ const batch = {
     plan,
   })),
 };
-writeFileSync(
-  "work/sqlserver-preview.html",
-  `<html><head><link rel="stylesheet" href="../dist/webview.css"></head><body><div id="root"></div><script>window.acquireVsCodeApi=()=>({getState:()=>({batch:${JSON.stringify(batch)}}),setState:()=>{},postMessage:()=>{}})</script><script src="../dist/webview.js"></script></body></html>`,
-);
-const browser = await chromium.launch({
-  executablePath: process.env.DBTUNA_BROWSER,
-  headless: true,
+const { browser, page, errors } = await openPreview({
+  name: "render-sqlserver",
+  state: { batch },
+  viewport: { width: 1440, height: 900 },
 });
 try {
-  const page = await browser.newPage({
-    viewport: { width: 1440, height: 900 },
-  });
-  const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(pathToFileURL(resolve("work/sqlserver-preview.html")).href);
   await page.waitForSelector(".operator");
   const queryPreview = page
     .getByRole("region", { name: "Query 1", exact: true })
@@ -78,7 +61,7 @@ try {
     .getByRole("tooltip")
     .getByText("Estimated CPU cost", { exact: true })
     .waitFor();
-  await page.screenshot({ path: "media/sqlserver-plan.png" });
+  await screenshot(page, { path: "media/sqlserver-plan.png" });
   if (errors.length) throw Error(errors.join("\n"));
   console.log(
     "SQL Server: two independent query sections with scoped graphs, native object details, scoped costs and delayed tooltip rendered.",

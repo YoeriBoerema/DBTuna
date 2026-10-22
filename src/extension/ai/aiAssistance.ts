@@ -154,10 +154,11 @@ export class AiAssistance {
         abort.signal,
       );
       if (abort.signal.aborted) throw Error("AI request cancelled.");
-      this.notify({ ...response, ...result });
+      this.notify({ ...response, status: "complete", ...result });
     } catch (error) {
       this.notify({
         ...response,
+        status: abort.signal.aborted ? "cancelled" : "error",
         error: abort.signal.aborted
           ? "AI request cancelled."
           : error instanceof Error

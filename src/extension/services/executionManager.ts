@@ -1,12 +1,9 @@
 ﻿import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { validate } from "../../../packages/plan-core/src/schema";
-import type { Profile } from "../connection/profile";
+import { sameConnection, type Profile } from "../connection/profile";
 import type { ConnectionManager } from "../connection/connectionManager";
-import { collectActualPlan, clientConfig } from "../connection/postgresClient";
-import { collectActualSqlServerPlan } from "../connection/sqlServerClient";
-import { PostgresAdapter } from "../../../packages/adapter-postgres/src/postgresAdapter";
-import { SqlServerAdapter } from "../../../packages/adapter-sqlserver/src/sqlServerAdapter";
-import type { ExtensionToWebview } from "../webview/messages";
+import { databaseConnector } from "../connectors/registry";
+import type { ExtensionToWebview, ExecutionOutcome } from "../webview/messages";
 import { executionQuery } from "./executionQuery";
 type ExecutionPlatform = {
   trusted: () => boolean;
@@ -20,11 +17,12 @@ type ActualCollector = (
   signal: AbortSignal,
 ) => Promise<{ raw: unknown; version?: string }>;
 const collectActual: ActualCollector = (profile, password, sql, signal) =>
-  profile.type === "postgresql"
-    ? collectActualPlan(clientConfig(profile, password), sql, signal)
-    : collectActualSqlServerPlan(profile, password, sql, signal);
+  databaseConnector(profile.type).collectActual(profile, password, sql, signal);
 export class ExecutionManager {
-  private bindings = new Map<string, { plan: QueryPlan; profile: Profile }>();
+  private bindings = new Map<
+    string,
+    { plan: QueryPlan; profile: Profile; batchSql?: string }
+  >();
   private actuals = new Map<string, QueryPlan>();
   private seenRequests = new Set<string>();
   private active?: { id: string; abort: AbortController };
@@ -35,17 +33,17 @@ export class ExecutionManager {
     private platform: ExecutionPlatform,
     private collect: ActualCollector = collectActual,
   ) {}
-  register(plan: QueryPlan, profile: Profile) {
+  register(plan: QueryPlan, profile: Profile, batchSql?: string) {
     if (this.bindings.has(plan.id)) return;
     try {
-      executionQuery(plan);
-      plan.metadata.executionAvailable = true;
+      executionQuery(plan, batchSql);
+      plan.application.executionAvailable = true;
     } catch (error) {
-      plan.metadata.executionAvailable = false;
-      plan.metadata.executionUnavailableReason =
+      plan.application.executionAvailable = false;
+      plan.application.executionUnavailableReason =
         error instanceof Error ? error.message : "Unsupported query.";
     }
-    this.bindings.set(plan.id, { plan, profile: { ...profile } });
+    this.bindings.set(plan.id, { plan, profile: { ...profile }, batchSql });
   }
   findActual(id: string) {
     return [...this.actuals.values()].find((plan) => plan.id === id);
@@ -80,12 +78,7 @@ export class ExecutionManager {
     const abort = new AbortController();
     this.active = { id: requestId, abort };
     let started = false;
-    const notify = (
-      change: Omit<
-        Extract<ExtensionToWebview, { type: "EXECUTION_RESULT" }>,
-        "type" | "planId" | "requestId"
-      >,
-    ) =>
+    const notify = (change: ExecutionOutcome) =>
       this.notify({ type: "EXECUTION_RESULT", planId, requestId, ...change });
     try {
       if (!this.platform.trusted())
@@ -98,14 +91,11 @@ export class ExecutionManager {
       const current = this.connections
         .profiles()
         .find((profile) => profile.id === binding.profile.id);
-      if (
-        !current ||
-        JSON.stringify(current) !== JSON.stringify(binding.profile)
-      )
+      if (!current || !sameConnection(current, binding.profile))
         throw Error(
           "The connection changed. Run Explain again before executing.",
         );
-      const { sql, kind } = executionQuery(binding.plan);
+      const { sql, kind } = executionQuery(binding.plan, binding.batchSql);
       const confirmed = await this.platform.confirm(
         `Run ${kind} on ${current.name} (${current.host}:${current.port}/${current.database})?`,
         `This executes only the displayed query, not the whole file. ${kind === "INSERT" ? "INSERT changes will be committed and may fire triggers." : "SQL and functions will actually run."} Cancellation may not undo changes. A repeated run repeats the SQL.\n\n${sql}`,
@@ -117,7 +107,7 @@ export class ExecutionManager {
       const fresh = this.connections
         .profiles()
         .find((profile) => profile.id === current.id);
-      if (!fresh || JSON.stringify(fresh) !== JSON.stringify(binding.profile))
+      if (!fresh || !sameConnection(fresh, binding.profile))
         throw Error("The connection changed. Run Explain again.");
       const password = await this.connections.password(current);
       if (abort.signal.aborted) throw Error("Execution cancelled.");
@@ -126,36 +116,19 @@ export class ExecutionManager {
       started = true;
       const result = await this.collect(current, password, sql, abort.signal);
       const elapsedMs = Date.now() - start;
-      let actual: QueryPlan;
-      if (current.type === "postgresql")
-        actual = new PostgresAdapter().parse(result.raw);
-      else {
-        const adapter = new SqlServerAdapter();
-        const statements = (
-          Array.isArray(result.raw) ? result.raw : [result.raw]
-        ).flatMap((raw) => adapter.parseStatements(raw));
-        const normalize = (text: string | undefined) =>
-          (text || "").trim().replace(/;\s*$/, "");
-        const matches = statements.filter(
-          (plan) => normalize(plan.query) === normalize(binding.plan.query),
-        );
-        const candidates = matches.length
-          ? matches
-          : statements.filter((plan) => plan.metadata.statementType === kind);
-        if (candidates.length !== 1)
-          throw Error(
-            "The query ran, but its actual plan could not be identified uniquely among returned statement/trigger plans.",
-          );
-        actual = candidates[0];
-      }
+      const actual = databaseConnector(current.type).selectActual(
+        result.raw,
+        binding.plan,
+        kind,
+      );
       if (abort.signal.aborted) throw Error("Execution cancelled.");
       if (!actual.nodes.some((node) => node.actuals))
         throw Error("Query ran but no actual runtime counters were returned.");
       actual.id = planId + ":actual:" + requestId;
       actual.query = binding.plan.query;
-      actual.metadata.planKind = "actual";
-      actual.metadata.clientElapsedMs = elapsedMs;
-      actual.metadata.connectionLabel = current.name;
+      actual.application.planKind = "actual";
+      actual.application.clientElapsedMs = elapsedMs;
+      actual.application.connectionLabel = current.name;
       actual.source.capturedAt = new Date().toISOString();
       if (result.version) actual.database.version = result.version;
       validate(actual);

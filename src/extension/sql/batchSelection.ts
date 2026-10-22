@@ -1,9 +1,10 @@
+import { SQL_LIMITS } from "../../../packages/plan-core/src/limits";
 import { MAX_BATCH_STATEMENTS } from "../../../packages/plan-core/src/batch";
 // Find candidate boundaries lexically; the PostgreSQL AST validator checks every
 // candidate before EXPLAIN. Unclosed/ambiguous quoting fails the entire batch.
 export function splitSqlBatch(text: string, selection?: string): string[] {
   const sql = selection === undefined ? text : selection;
-  if (new TextEncoder().encode(sql).byteLength > 1024 * 1024)
+  if (new TextEncoder().encode(sql).byteLength > SQL_LIMITS.bytes)
     throw Error("Selected SQL exceeds 1 MiB.");
   const result: string[] = [];
   let start = 0,

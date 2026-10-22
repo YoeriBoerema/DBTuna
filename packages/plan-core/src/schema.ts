@@ -1,4 +1,6 @@
+import { PLAN_LIMITS } from "./limits";
 import { z } from "zod";
+import { normalizePlanApplication } from "./application";
 export const categories = [
   "TABLE_SCAN",
   "INDEX_ACCESS",
@@ -50,36 +52,50 @@ export const nodeSchema = z.object({
     .optional(),
   properties: z.record(z.string(), z.unknown()),
 });
-export const planSchema = z.object({
-  schemaVersion: z.literal("1.0"),
-  id: z.string(),
-  database: z.object({ engine: z.string(), version: z.string().optional() }),
-  source: z.object({
-    format: z.string(),
-    capturedAt: z.string().optional(),
-    synthetic: z.boolean(),
-  }),
-  query: z.string().optional(),
-  rootNodeIds: z.array(z.string()).min(1),
-  nodes: z.array(nodeSchema).min(1).max(1000),
-  edges: z
-    .array(
-      z.object({
-        id: z.string(),
-        source: z.string(),
-        target: z.string(),
-        relationship: z.string().optional(),
-      }),
-    )
-    .max(1000),
-  metadata: z.record(z.string(), z.unknown()),
+// DBTuna-owned presentation fields. Native database attributes stay in metadata.
+export const applicationSchema = z.object({
+  connectionLabel: z.string().optional(),
+  executionAvailable: z.boolean().optional(),
+  executionUnavailableReason: z.string().optional(),
+  statementIndex: z.number().int().positive().optional(),
+  statementType: z.string().optional(),
+  planKind: z.enum(["estimated", "actual"]).optional(),
+  clientElapsedMs: num,
 });
+export const planSchema = z.preprocess(
+  normalizePlanApplication,
+  z.object({
+    schemaVersion: z.literal("1.0"),
+    id: z.string(),
+    database: z.object({ engine: z.string(), version: z.string().optional() }),
+    source: z.object({
+      format: z.string(),
+      capturedAt: z.string().optional(),
+      synthetic: z.boolean(),
+    }),
+    query: z.string().optional(),
+    rootNodeIds: z.array(z.string()).min(1),
+    nodes: z.array(nodeSchema).min(1).max(PLAN_LIMITS.operators),
+    edges: z
+      .array(
+        z.object({
+          id: z.string(),
+          source: z.string(),
+          target: z.string(),
+          relationship: z.string().optional(),
+        }),
+      )
+      .max(PLAN_LIMITS.edges),
+    application: applicationSchema.default({}),
+    metadata: z.record(z.string(), z.unknown()),
+  }),
+);
 export type QueryPlan = z.infer<typeof planSchema>;
 export type PlanNode = z.infer<typeof nodeSchema>;
 export type OperatorCategory = (typeof categories)[number];
 export function bounded(input: unknown): unknown {
   if (typeof input === "string") {
-    if (Buffer.byteLength(input) > 5 * 1024 * 1024)
+    if (Buffer.byteLength(input) > PLAN_LIMITS.bytes)
       throw Error("Plan exceeds 5 MiB.");
     try {
       input = JSON.parse(input);
@@ -90,7 +106,7 @@ export function bounded(input: unknown): unknown {
   }
   let count = 0;
   const walk = (v: unknown, d: number) => {
-    if (d > 512 || ++count > 150000)
+    if (d > PLAN_LIMITS.objectDepth || ++count > PLAN_LIMITS.values)
       throw Error("Plan exceeds nesting or size limits.");
     if (v && typeof v === "object")
       for (const x of Object.values(v)) walk(x, d + 1);
