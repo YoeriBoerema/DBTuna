@@ -19,6 +19,30 @@ exports.run = async () => {
     "aiRemoveApiKey",
   ])
     assert.ok(commands.includes("dbtuna." + id));
+  assert.ok(commands.includes("dbtuna.doom"));
+  const inputs = [],
+    errors = [];
+  const originalInput = vscode.window.showInputBox;
+  const originalPick = vscode.window.showQuickPick;
+  const originalError = vscode.window.showErrorMessage;
+  try {
+    vscode.window.showQuickPick = async (items) => items[0];
+    vscode.window.showInputBox = async (options) => {
+      inputs.push(options.prompt);
+      assert.equal(options.prompt, "Connection name");
+      return "DOOMGUY";
+    };
+    vscode.window.showErrorMessage = async (message) => {
+      errors.push(message);
+    };
+    await vscode.commands.executeCommand("dbtuna.addConnection");
+    assert.deepEqual(inputs, ["Connection name"]);
+    assert.deepEqual(errors, []);
+  } finally {
+    vscode.window.showInputBox = originalInput;
+    vscode.window.showQuickPick = originalPick;
+    vscode.window.showErrorMessage = originalError;
+  }
   await vscode.commands.executeCommand("dbtuna.loadSamplePlan");
   const doc = await vscode.workspace.openTextDocument({
     language: "sql",
@@ -27,6 +51,6 @@ exports.run = async () => {
   await vscode.window.showTextDocument(doc);
   assert.equal(doc.languageId, "sql");
   console.log(
-    "DBTuna activation, eleven commands including AI Assistance, sample panel, SQL editor verified.",
+    "DBTuna activation, eleven commands including AI Assistance, sample panel, SQL editor and special-name dispatch verified.",
   );
 };

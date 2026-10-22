@@ -2,19 +2,19 @@
 
 [Documentation](README.md) · [Development](development.md)
 
-Current source: **v0.6.5**. Verification recorded **22 October 2026**. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
+Current source: **v0.6.6**. Verification recorded **22 October 2026**. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
 
 ## Current checks
 
 | Check | Result and scope |
 | --- | --- |
-| Unit tests | 74 passed: native fixtures, validation, graph/batch invariants, connectors, execution binding, profile storage, AI transport and asynchronous state |
+| Unit tests | 76 passed: native fixtures, validation, graph/batch invariants, connectors, execution binding, profile storage, AI transport and asynchronous state |
 | TypeScript and ESLint | Passed, including browser helpers and verification scripts |
 | Host and webview bundles | Built successfully |
 | Browser suites | Passed in headless Edge: layout, navigation, 500 ms tooltips, view switching, query sections, actual controls and structured/plain-text AI presentation |
 | PostgreSQL integration | Passed on disposable PostgreSQL 18.4: estimates, joins, six INSERT forms, unchanged estimate row counts, actual SELECT, committed actual INSERT, rollback and cancellation |
-| VS Code activation | Passed on isolated VS Code 1.96.4: activation, eleven commands, sample panel and SQL editor |
-| VSIX packaging | v0.6.5 built successfully; packaging does not install or publish it |
+| VS Code activation | Passed on isolated VS Code 1.96.4: activation, command registration, sample panel and SQL editor |
+| VSIX packaging | v0.6.6 built successfully; packaging does not install or publish it |
 | Live SQL Server | Not run; fixtures, protocol, normalization and browser checks passed |
 | Live OpenAI requests | Not run; mock transport and UI checks passed |
 

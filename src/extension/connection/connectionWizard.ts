@@ -1,7 +1,10 @@
 import * as vscode from "vscode";
 import { randomUUID } from "node:crypto";
 import { profileSchema, type Profile } from "./profile";
-export async function configureConnection(existing?: Profile) {
+export async function configureConnection(
+  existing?: Profile,
+  onSpecialName?: (name: string) => Promise<boolean>,
+) {
   if (!vscode.workspace.isTrusted)
     throw Error("Trust this workspace before configuring connections.");
   const ask = async (prompt: string, value?: string, password = false) => {
@@ -24,8 +27,9 @@ export async function configureConnection(existing?: Profile) {
   );
   if (!typeChoice) return;
   const type = typeChoice.value;
-  const name = await ask("Connection name", existing?.name),
-    host = await ask("Host", existing?.host || "localhost"),
+  const name = await ask("Connection name", existing?.name);
+  if (!existing && (await onSpecialName?.(name))) return;
+  const host = await ask("Host", existing?.host || "localhost"),
     port = Number(
       await ask(
         "Port",

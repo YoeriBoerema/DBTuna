@@ -2,7 +2,9 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
-## Current source: 0.6.5 (not yet released)
+## 0.6.6
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.6)
 
 Changes since [v0.6.2](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.2):
 

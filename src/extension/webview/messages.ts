@@ -8,6 +8,7 @@ export const webviewMessageSchema = z.discriminatedUnion("type", [
     .object({
       type: z.enum([
         "WEBVIEW_READY",
+        "EXIT_DOOM",
         "EXPORT_PLAN",
         "IMPORT_PLAN",
         "LOAD_SAMPLE",

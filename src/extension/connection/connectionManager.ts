@@ -6,7 +6,10 @@ import { ProfileRepository } from "./profileRepository";
 import { configureConnection } from "./connectionWizard";
 export class ConnectionManager {
   private repository: ProfileRepository;
-  constructor(context: vscode.ExtensionContext) {
+  constructor(
+    context: vscode.ExtensionContext,
+    private onSpecialName?: (name: string) => Promise<boolean>,
+  ) {
     this.repository = new ProfileRepository(
       context.globalState,
       context.secrets,
@@ -50,7 +53,7 @@ export class ConnectionManager {
     return this.repository.active() || (await this.choose());
   }
   async edit(existing?: Profile) {
-    const result = await configureConnection(existing);
+    const result = await configureConnection(existing, this.onSpecialName);
     if (!result) return;
     await this.repository.save(result.profile, result.password);
     return result.profile;

@@ -1,6 +1,6 @@
 # DBTuna documentation
 
-DBTuna visualizes PostgreSQL and SQL Server plans inside VS Code. This documentation describes the current main branch, **v0.6.5**. Published VSIX files are listed separately in [Releases](https://github.com/YoeriBoerema/DBTuna/releases); the latest published version is currently v0.6.2.
+DBTuna visualizes PostgreSQL and SQL Server plans inside VS Code. This documentation describes the current main branch, **v0.6.6**. Published VSIX files are listed separately in [Releases](https://github.com/YoeriBoerema/DBTuna/releases); the latest published version is currently v0.6.6.
 
 ## Use DBTuna
 

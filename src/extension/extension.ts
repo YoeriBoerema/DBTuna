@@ -13,7 +13,11 @@ export async function activate(context: vscode.ExtensionContext) {
     new PostgresAdapter(),
     new SqlServerAdapter(),
   ]);
-  const connections = new ConnectionManager(context);
+  const connections = new ConnectionManager(context, async (name) => {
+    if (name.trim() !== "DOOMGUY") return false;
+    await vscode.commands.executeCommand("dbtuna.doom");
+    return true;
+  });
   await connections.initialize();
   const cancel = () => {
     explain?.cancel();
@@ -89,6 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
       }),
     );
+  command("doom", () => panels.showDoom());
   command("aiAssistance", () => ai.menu());
   command("aiSetApiKey", () => ai.setKey());
   command("aiSelectModel", () => ai.selectModel());
