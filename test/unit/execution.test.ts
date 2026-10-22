@@ -100,7 +100,7 @@ test("SQL Server runtime metrics aggregate rows/CPU across threads and keep max-
     ),
   );
 });
-test("execution coordinator requires current live bindings, original connection, trust and confirmation", async () => {
+test("execution coordinator requires current live bindings, original connection, trust", async () => {
   let profile: Profile = {
     id: "p",
     name: "Test",
@@ -111,8 +111,7 @@ test("execution coordinator requires current live bindings, original connection,
     user: "test",
     ssl: "disable",
   };
-  let confirmed = false,
-    trusted = true,
+  let trusted = true,
     current = true,
     collects = 0;
   const messages: ExtensionToWebview[] = [];
@@ -122,11 +121,6 @@ test("execution coordinator requires current live bindings, original connection,
     () => current,
     {
       trusted: () => trusted,
-      confirm: async (title, detail) => {
-        assert.match(title, /Test/);
-        assert.match(detail, /only the displayed query/);
-        return confirmed;
-      },
       exportPlan: async () => {},
     },
     async () => {
@@ -149,9 +143,6 @@ test("execution coordinator requires current live bindings, original connection,
   await service.run(plan.id, "unbound");
   assert.equal(collects, 0);
   service.register(plan, profile);
-  await service.run(plan.id, "declined");
-  assert.equal(collects, 0);
-  confirmed = true;
   trusted = false;
   await service.run(plan.id, "untrusted");
   assert.equal(collects, 0);
@@ -174,7 +165,7 @@ test("execution coordinator requires current live bindings, original connection,
   assert.ok(result.actualPlan?.nodes[0].actuals);
   assert.ok(service.findActual(result.actualPlan!.id));
 });
-test("INSERT confirmations are explicit; duplicates are blocked and uncertain outcomes never retry", async () => {
+test("INSERT duplicates are blocked and uncertain outcomes never retry", async () => {
   const profile: Profile = {
     id: "p",
     name: "Test",
@@ -194,11 +185,6 @@ test("INSERT confirmations are explicit; duplicates are blocked and uncertain ou
     () => true,
     {
       trusted: () => true,
-      confirm: async (title, detail) => {
-        assert.match(title, /INSERT/);
-        assert.match(detail, /committed/);
-        return true;
-      },
       exportPlan: async () => {},
     },
     async () => {
@@ -264,7 +250,6 @@ test("active execution cancellation retains uncertainty and does not trigger ano
     () => true,
     {
       trusted: () => true,
-      confirm: async () => true,
       exportPlan: async () => {},
     },
     async (p, password, sql, signal) => {
@@ -315,7 +300,6 @@ test("SQL Server execution identifies the requested statement's actual plan amon
     () => true,
     {
       trusted: () => true,
-      confirm: async () => true,
       exportPlan: async () => {},
     },
     async () => ({ raw: native }),
@@ -355,10 +339,6 @@ test("SQL Server run uses host-bound declarations without adding setup SQL to th
     () => true,
     {
       trusted: () => true,
-      confirm: async (_title, detail) => {
-        assert.ok(detail.includes("DECLARE @id int=42;"));
-        return true;
-      },
       exportPlan: async () => {},
     },
     async (_profile, _password, sql) => {

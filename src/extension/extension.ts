@@ -47,12 +47,6 @@ export async function activate(context: vscode.ExtensionContext) {
       !!panels.batch?.items.some((item) => item.plan?.id === id),
     {
       trusted: () => vscode.workspace.isTrusted,
-      confirm: async (title, detail) =>
-        (await vscode.window.showWarningMessage(
-          title,
-          { modal: true, detail },
-          "Run query",
-        )) === "Run query",
       exportPlan: async (plan) => {
         const uri = await vscode.window.showSaveDialog({
           defaultUri: vscode.Uri.file("dbtuna-actual-plan.json"),

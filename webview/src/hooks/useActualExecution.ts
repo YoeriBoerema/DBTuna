@@ -11,8 +11,10 @@ export function useActualExecution(plan: QueryPlan) {
   const { actual, status, elapsed } = state;
   const error = "error" in state ? state.error : "";
   const [mode, setMode] = useState<"estimated" | "actual">("estimated");
+  const [armed, setArmed] = useState(false);
   const active = useRef<string | undefined>(undefined);
   const pending = status === "confirming" || status === "running";
+  useEffect(() => setArmed(false), [plan]);
   useEffect(() => {
     const listener = (event: MessageEvent<ExtensionToWebview>) => {
       const message = event.data;
@@ -42,7 +44,12 @@ export function useActualExecution(plan: QueryPlan) {
     return () => clearInterval(timer);
   }, [status]);
   const run = () => {
-    if (active.current) return;
+    if (active.current || plan.application.executionAvailable !== true) return;
+    if (!armed) {
+      setArmed(true);
+      return;
+    }
+    setArmed(false);
     const requestId = crypto.randomUUID();
     active.current = requestId;
     dispatch({ type: "start", requestId });
@@ -55,6 +62,7 @@ export function useActualExecution(plan: QueryPlan) {
   };
   return {
     actual,
+    armed,
     mode,
     setMode,
     status,

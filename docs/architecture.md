@@ -20,7 +20,7 @@ Estimated collection, confirmed actual execution and optional AI advice are sepa
 | `src/extension/services/explainCoordinator.ts` | Editor input, Explain progress and batch cancellation |
 | `src/extension/services/batchExplain.ts` | Ordered query outcomes and per-statement expansion |
 | `src/extension/services/planFiles.ts` | Sample loading, offline imports and estimated-plan/batch exports |
-| `src/extension/services/executionManager.ts` | Live bindings, trust/confirmation, duplicate prevention and actual execution |
+| `src/extension/services/executionManager.ts` | Live bindings, workspace trust, duplicate prevention and actual execution |
 | `src/extension/connectors/` | Dialect splitting, validation, collection, preparation and actual-statement selection |
 | `src/extension/connection/` | Driver sessions, profile repository and setup wizard |
 | `src/extension/ai/` | Advice input, instructions, model/credential setup and bounded API transport |

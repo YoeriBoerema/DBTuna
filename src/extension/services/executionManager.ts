@@ -7,7 +7,6 @@ import type { ExtensionToWebview, ExecutionOutcome } from "../webview/messages";
 import { executionQuery } from "./executionQuery";
 type ExecutionPlatform = {
   trusted: () => boolean;
-  confirm: (title: string, detail: string) => Promise<boolean>;
   exportPlan: (plan: QueryPlan) => Promise<void>;
 };
 type ActualCollector = (
@@ -96,11 +95,7 @@ export class ExecutionManager {
           "The connection changed. Run Explain again before executing.",
         );
       const { sql, kind } = executionQuery(binding.plan, binding.batchSql);
-      const confirmed = await this.platform.confirm(
-        `Run ${kind} on ${current.name} (${current.host}:${current.port}/${current.database})?`,
-        `This executes only the displayed query, not the whole file. ${kind === "INSERT" ? "INSERT changes will be committed and may fire triggers." : "SQL and functions will actually run."} Cancellation may not undo changes. A repeated run repeats the SQL.\n\n${sql}`,
-      );
-      if (!confirmed || abort.signal.aborted || !this.isCurrent(planId)) {
+      if (abort.signal.aborted || !this.isCurrent(planId)) {
         notify({ status: "cancelled", error: "Execution was not started." });
         return;
       }

@@ -34,7 +34,7 @@ npm run build
 npm run package
 ```
 
-The current package command writes `../dbtuna-0.6.6.vsix`. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
+The current package command writes `../dbtuna-0.6.7.vsix`. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
 
 ## Verify
 
@@ -70,4 +70,4 @@ AI tests use mock transport. A live OpenAI request requires a separately supplie
 
 ## Changing database support
 
-Native parsers belong in adapter packages; live database behavior belongs behind the host connector contract. Keep confirmation and execution authorization centralized. See [adding a connector](adapter-development.md) and [security](security.md) before modifying collection or execution paths.
+Native parsers belong in adapter packages; live database behavior belongs behind the host connector contract. Keep the two-click confirmation in the execution controls and execution authorization in the host. See [adding a connector](adapter-development.md) and [security](security.md) before modifying collection or execution paths.

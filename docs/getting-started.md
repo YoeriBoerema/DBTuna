@@ -39,7 +39,7 @@ The Plan view selector switches between compact horizontal and top-down cards. C
 
 ## Collect an actual plan
 
-After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Confirm the server, database and exact SQL in VS Code's modal dialog before execution starts.
+After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Click once to change the button to **Are you sure?**, then click again to execute the displayed query on its original connection. Each run requires both clicks.
 
 **A successful INSERT run commits changes and may fire triggers. Repeating Run repeats its effects. SELECT functions also execute. Cancellation cannot guarantee that changes are undone.**
 

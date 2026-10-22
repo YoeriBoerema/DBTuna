@@ -8,6 +8,7 @@ export function ExecutablePlan(
   const { plan } = props;
   const {
     actual,
+    armed,
     mode,
     setMode,
     status,
@@ -49,14 +50,16 @@ export function ExecutablePlan(
           }
           onClick={run}
         >
-          {actual
-            ? "Run again and collect actual plan"
-            : "Run query and collect actual plan"}
+          {armed
+            ? "Are you sure?"
+            : actual
+              ? "Run again and collect actual plan"
+              : "Run query and collect actual plan"}
         </button>
         {pending && <button onClick={cancel}>Cancel execution</button>}
         <span role="status">
           {status === "confirming"
-            ? "Awaiting confirmation..."
+            ? "Preparing execution..."
             : status === "running"
               ? `Executing: ${(elapsed / 1000).toFixed(1)} s`
               : status === "complete"
@@ -64,6 +67,12 @@ export function ExecutablePlan(
                 : ""}
         </span>
       </div>
+      {armed && (
+        <div role="status">
+          This executes the displayed query on its original connection. INSERT
+          changes persist; running again repeats the query.
+        </div>
+      )}
       {error && (
         <div role="alert" className="execution-error">
           {error}

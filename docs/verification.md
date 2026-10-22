@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Development](development.md)
 
-Current source: **v0.6.6**. Verification recorded **22 October 2026**. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
+Current source: **v0.6.7**. Verification recorded **22 October 2026**. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
 
 ## Current checks
 
@@ -14,7 +14,7 @@ Current source: **v0.6.6**. Verification recorded **22 October 2026**. This page
 | Browser suites | Passed in headless Edge: layout, navigation, 500 ms tooltips, view switching, query sections, actual controls and structured/plain-text AI presentation |
 | PostgreSQL integration | Passed on disposable PostgreSQL 18.4: estimates, joins, six INSERT forms, unchanged estimate row counts, actual SELECT, committed actual INSERT, rollback and cancellation |
 | VS Code activation | Passed on isolated VS Code 1.96.4: activation, command registration, sample panel and SQL editor |
-| VSIX packaging | v0.6.6 built successfully; packaging does not install or publish it |
+| VSIX packaging | v0.6.7 built successfully; packaging does not install or publish it |
 | Live SQL Server | Not run; fixtures, protocol, normalization and browser checks passed |
 | Live OpenAI requests | Not run; mock transport and UI checks passed |
 

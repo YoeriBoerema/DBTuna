@@ -2,6 +2,14 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.7
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.7)
+
+- Replace the actual-plan confirmation dialog with a two-click button: first click displays **Are you sure?**, second click executes the query.
+- Require fresh confirmation for each SELECT or INSERT run, including reruns.
+- Preserve original-connection, workspace-trust and duplicate-execution guards.
+
 ## 0.6.6
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.6)
