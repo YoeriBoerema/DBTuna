@@ -1,37 +1,68 @@
 # Architecture
 
-SQL editor → selected text (or whole file) / AST validation → extension-host PostgreSQL collector → PostgreSQL adapter → canonical QueryPlan → typed webview message → ELK layout → React Flow.
+[Documentation](README.md) · [Development](development.md) · [Adding a connector](adapter-development.md)
 
-The collector uses a fresh pg client for each operation, a five-second connection timeout, a twelve-second client query timeout and a ten-second transaction statement timeout. It issues BEGIN READ ONLY, SET LOCAL, SHOW server_version, EXPLAIN, and ROLLBACK as separate protocol statements. Cancellation closes the client. The finally path releases resources even after failures.
+## Request flow
 
-The UI imports canonical types only. Passwords and connection objects never cross the host boundary. Webview commands are a finite, validated allowlist. A ready handshake prevents loss of initial state; the latest status is sent when ready. Plans survive hidden panels and webview state reloads; reopening a disposed panel starts a new view.
+1. The active editor supplies exactly its selection, or its entire document when no selection exists.
+2. ExplainCoordinator selects the database connector, splits/validates input and manages sequential batch progress and cancellation.
+3. The connector collects a native plan and delegates normalization to the engine adapter.
+4. The core validates a canonical QueryPlan and assigns query-section identity.
+5. Typed messages deliver plan snapshots to the React webview, where ELK lays out the graph and React Flow renders it.
 
-Imports are bounded to 5 MiB, 512 nesting levels, 150,000 values and 1,000 graph operators. Graph validation requires unique IDs, valid endpoints, an acyclic rooted forest and no disconnected nodes. Layout uses the layered ELK algorithm with parent-to-child direction. Deterministic PostgreSQL IDs follow tree paths.
+Estimated collection, confirmed actual execution and optional AI advice are separate workflows. Database drivers, secrets and external HTTP remain in the extension host.
 
-The presentation layer supports compact horizontal and top-down card layouts. ELK still lays out the canonical parent-to-child graph; compact view displays edges in reverse (child → parent) with left-pointing arrowheads to represent data flow. Exported canonical graphs retain their original parent-to-child direction and ordering. Compact operator pictograms are local SVG React components and use the existing normalized categories.
+## Module map
 
-For batches, lexical boundary scanning accounts for comments/quotes and fails closed on ambiguity, followed by PostgreSQL AST validation of each exact candidate. The batch service tracks ordered pending/running/complete/error/cancelled items and calls the existing collector sequentially. Complete plans keep independent canonical IDs and graph direction. A typed BATCH_LOADED snapshot updates the webview. Each numbered section owns a React Flow provider and independent selection; near-viewport lazy mounting bounds initial layout work. A versioned dbtuna-batch envelope handles import/export without changing the canonical QueryPlan format.
+| Location | Responsibility |
+| --- | --- |
+| `src/extension/extension.ts` | Construct services, register commands and wire messages |
+| `src/extension/services/explainCoordinator.ts` | Editor input, Explain progress and batch cancellation |
+| `src/extension/services/batchExplain.ts` | Ordered query outcomes and per-statement expansion |
+| `src/extension/services/planFiles.ts` | Sample loading, offline imports and estimated-plan/batch exports |
+| `src/extension/services/executionManager.ts` | Live bindings, trust/confirmation, duplicate prevention and actual execution |
+| `src/extension/connectors/` | Dialect splitting, validation, collection, preparation and actual-statement selection |
+| `src/extension/connection/` | Driver sessions, profile repository and setup wizard |
+| `src/extension/ai/` | Advice input, instructions, model/credential setup and bounded API transport |
+| `packages/adapter-sdk/` | Native parser contract and registry |
+| `packages/adapter-postgres/`, `packages/adapter-sqlserver/` | Engine-specific normalization |
+| `packages/plan-core/` | Canonical schemas, graph invariants, batches, advice contract and resource policies |
+| `webview/src/components/` | Graph, operators, details, AI controls and per-query presentation |
+| `webview/src/hooks/`, `webview/src/state/` | Layout and asynchronous request lifecycles, pure reducers |
+| `test/helpers/` | Shared browser preview harness and verification process runner |
 
+## Canonical data
 
-## Responsibility boundaries
+QueryPlan schema 1.0 represents a rooted forest with unique node/edge IDs, valid endpoints, at most one parent per node, and no cycles or disconnected nodes. Nodes carry native identity, normalized category, object information, optional estimates/actuals and unknown native properties.
 
-`extension.ts` wires services and registers VS Code commands. `ExplainCoordinator` owns selection, progress and batch cancellation; `PlanFiles` owns sample loading and file import/export. `ExecutionManager` remains the only coordinator for confirmed actual execution and keeps original connection snapshots and SQL declaration context in host-only bindings.
+`application` contains typed DBTuna presentation fields such as the connection display label, statement identity, execution availability, plan kind and client elapsed time. `metadata` and node `properties` preserve extensible native information. Missing metrics stay absent rather than becoming zero.
 
-The host-side `DatabaseConnector` contract covers dialect-specific splitting, validation, estimated/actual collection, native parsing, execution preparation and actual-statement selection. PostgreSQL and SQL Server implementations live under `src/extension/connectors`. The existing adapter SDK remains independent of VS Code and database drivers and owns native-to-canonical parsing only.
+Older canonical files that stored application fields in metadata are upgraded by the reader. Legacy batchSql is discarded. Original connection snapshots and declaration setup stay in host-side execution bindings. Serialized capability flags cannot authorize execution.
 
-Canonical plans separate typed DBTuna `application` fields (connection display label, statement identity, execution availability and measurement presentation) from extensible native `metadata`. The 1.0 reader upgrades older plans that stored application fields in metadata and discards legacy `batchSql`; new exports do not contain host execution setup. Imported or restored snapshots do not authorize execution. The host must register a freshly explained plan on its original connection.
+Cost and runtime scopes are explicit: SQL Server subtree costs differ from operator-local costs; PostgreSQL rows/times are per loop; SQL Server runtime aggregates use total rows/executions, summed CPU and maximum thread elapsed time.
 
-The React entry screen composes focused components under `webview/src/components`. Layout, actual execution and AI request lifecycles live in hooks under `webview/src/hooks`; `vscodeApi.ts` owns acquisition of the VS Code API and restoration of saved view state. The 500 ms tooltip, graph orientation, selected operators and request cancellation behavior remain unchanged.
+## Engine behavior
 
+PostgreSQL splits semicolon-delimited SQL lexically, validates each candidate using an AST parser and collects estimates in independent read-only transactions. Actual execution has a separate transaction that commits on success.
 
-## Medium-priority maintainability refactor
+SQL Server preserves each GO-delimited compilation batch, then displays returned statements separately. Its adapter parses XML once, enforces whole-document limits and normalizes each statement tree. Scoped XML is serialized for native metadata without reparsing or decoding entities again. Actual collection identifies the selected statement among returned plans.
 
-SQL Server validates and parses the XML document once, enforces the operator budget across all statements, and normalizes statement trees directly. Scoped native XML is serialized for export metadata without reparsing it. Numeric XML references still decode exactly once.
+## State and messages
 
-Execution and AI replies use discriminated outcome types. Successful execution includes a measured plan and elapsed time; successful advice includes validated structured advice and its model. Pure UI reducers own asynchronous transitions and ignore obsolete replies. Batch items also use a discriminated schema so only completed items carry plans.
+Webview-to-host messages use a strict Zod allowlist. Execution requests contain plan/request IDs, never connection or SQL overrides. AI requests contain IDs, optional user context and optional SQL for imported plans; the host resolves the displayed plan itself.
 
-`ProfileRepository` owns profile storage, active selection, secrets and the existing one-time migration. `connectionWizard.ts` owns prompts; `ConnectionManager` coordinates them. Profiles are a union of PostgreSQL and SQL Server variants, and original-connection checks compare configuration fields explicitly.
+Execution and AI outcomes are discriminated unions. Successful execution must contain an actual plan and elapsed time; successful AI advice must contain validated structured advice and a model. Batch items use a discriminated schema so only complete items contain plans. UI reducers ignore obsolete replies and keep previous measured plans after a later error or cancellation.
 
-Browser-safe `plan-core/src/limits.ts` names byte/character, nesting, graph and batch budgets separately. Database connection, estimated execution, actual execution, lock and cancellation timeouts retain distinct names. AI model-list and advice requests also have explicit timeout policies.
+The webview uses a ready handshake for the latest host snapshot and persists plan/view state for display restoration. Restored snapshots cannot enable execution; advice and actual-run results are session-local. Closing or replacing a plan cancels active work.
 
-Shared `advice.ts` owns validation; the provider JSON schema derives from it, with cross-field checks remaining local. Host AI code separates input selection, instructions and bounded HTTP transport. Advice stays structured across the host/webview boundary, and the UI formats it as plain text. Advice is still ephemeral and never automatically executes SQL.
+## Presentation
+
+Canonical edges retain parent-to-child orientation. Compact presentation reverses displayed edges to show data flow from right-hand inputs to the left-hand result. Card view remains top-down. Edge width scales with estimated child rows; costs never become elapsed-time estimates.
+
+Each query owns its graph provider and operator selection. Off-screen graphs mount near the viewport. The selected view is saved, and automatic fitting occurs after layout. Cost tooltips wait 500 ms and are dismissed on pointer departure, interaction or Escape.
+
+## Limits and trust
+
+Browser-safe policy constants live in `packages/plan-core/src/limits.ts`. Byte and character bounds are distinct; XML and object nesting have separate names even when configured equally. Graph, whole-batch and actual-document budgets are explicit. Database connection, estimate, actual, lock and cancellation timeouts are separate policies; AI model listing and advice also have separate timeouts.
+
+See [security](security.md) for trust, data exposure and write semantics, and [verification](verification.md) for the evidence supporting the current implementation.

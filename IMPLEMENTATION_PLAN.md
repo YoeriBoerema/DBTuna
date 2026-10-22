@@ -1,14 +1,16 @@
 # Implementation status
 
-- Scaffold, command contributions, F5 task and React webview: implemented.
-- Canonical Zod model, bounded imports and graph validation: implemented and unit tested.
-- PostgreSQL adapter, operator mappings, synthetic regression fixtures: implemented and unit tested.
-- React Flow/ELK graph, details, controls, import/export: implemented; browser render and selection verified.
-- Connection CRUD, test, active profile, TLS and SecretStorage: implemented; interactive dialog coverage remains manual.
-- Selected-text/whole-file input, AST classification, read-only EXPLAIN and cancellation: implemented; live collector tested against PostgreSQL 18.4.
-- Extension host activation, seven registered commands, sample panel and SQL editor: verified in isolated VS Code 1.96.4.
-- Packaging and installation: see docs/verification.md for final results.
+The current source is v0.6.5. Product usage belongs in the [README](README.md), module responsibilities in [architecture](docs/architecture.md), and test evidence in [verification](docs/verification.md).
 
-Optional heuristic diagnostics deferred. PostgreSQL 14–17 compatibility, exhaustive native syntax, connection dialogs, real theme host screenshots and full command-driven live database workflow require further manual coverage. No Git repository was present, so no incremental commits were made.
+Implemented:
 
-Multi-query extension: ordered independent batch planning, per-query error retention, progress/cancellation, numbered graph sections and bounded batch import/export implemented. Statements are not executed and do not prepare state for subsequent plans.
+- PostgreSQL and SQL Server estimated plans normalized into a shared validated graph.
+- Exact selection or whole-file planning, independent query sections, progress and cancellation.
+- Compact horizontal and card views, operator details and delayed cost tooltips.
+- Typed connections, secure credentials, offline imports and estimated-plan/batch exports.
+- Confirmed SELECT/INSERT actual runs with original-connection binding and explicit uncertainty after errors.
+- Optional structured AI advice with API-key/model setup and no automatic SQL execution.
+- Modular connectors, host services, UI components/reducers, connection repository and shared limits.
+- A repeatable verification command with a shared browser harness.
+
+Remaining product scope includes additional database types, broader SQL syntax, a results grid, persistent actual-plan history, side-by-side comparison and optional heuristic diagnostics. Live SQL Server and OpenAI verification, connection-dialog walkthroughs and PostgreSQL 14-17 compatibility remain unverified in this environment. These are limitations, not committed delivery dates.
