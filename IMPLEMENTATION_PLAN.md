@@ -1,6 +1,6 @@
 # Implementation status
 
-The current source is v0.6.7. Product usage belongs in the [README](README.md), module responsibilities in [architecture](docs/architecture.md), and test evidence in [verification](docs/verification.md).
+The current source is v0.6.10. Product usage belongs in the [README](README.md), module responsibilities in [architecture](docs/architecture.md), and test evidence in [verification](docs/verification.md).
 
 Implemented:
 

@@ -5,6 +5,8 @@ import {
 } from "../../../packages/plan-core/src/batch";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { databaseConnector } from "../connectors/registry";
+import { prepareTsqlExplain } from "../sql/sqlServerExplain";
+import { preparePostgresExplain } from "../sql/postgresExplain";
 export function prepareBatch(
   statements: string[],
   type: "postgresql" | "sqlserver" = "postgresql",
@@ -13,7 +15,9 @@ export function prepareBatch(
     kind: "dbtuna-batch",
     schemaVersion: "1.0",
     id: randomUUID(),
-    items: statements.map((sql, i) => {
+    items: statements.flatMap((sql) => type === "sqlserver" ? prepareTsqlExplain(sql) : [preparePostgresExplain(sql)]).map(({ sql, skippedReason }, i) => {
+      if (skippedReason)
+        return { index: i + 1, sql, status: "skipped", error: skippedReason };
       try {
         databaseConnector(type).validate(sql);
         return { index: i + 1, sql, status: "pending" };

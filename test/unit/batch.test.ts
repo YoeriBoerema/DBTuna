@@ -64,7 +64,7 @@ test("batch retains valid results and individual syntax/unsupported/database fai
   );
   assert.deepEqual(
     result.items.map((i) => i.status),
-    ["complete", "error", "error", "error", "complete"],
+    ["complete", "error", "skipped", "error", "complete"],
   );
   assert.equal(calls.length, 3);
   assert.ok(result.items[1].error?.includes("syntax"));

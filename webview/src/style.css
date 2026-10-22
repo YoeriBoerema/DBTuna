@@ -218,6 +218,7 @@ h1 span {
 }
 .plan-placeholder,
 .query-pending,
+.query-skipped,
 .query-error {
   padding: 20px 16px;
   color: var(--vscode-descriptionForeground, #8e98ac);

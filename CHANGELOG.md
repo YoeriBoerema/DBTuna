@@ -2,6 +2,22 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.10
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.10)
+
+- Classify parsed unsupported PostgreSQL statements as skipped, while retaining syntax and collection errors.
+- Include the SQL Server tolerance and confirmation fixes from local builds 0.6.8 and 0.6.9.
+
+## 0.6.9 (local build)
+
+- Add tolerant SQL Server explanation with skipped-statement reasons and independent query failure handling.
+- Add two-click cancellation confirmation.
+
+## 0.6.8 (local build)
+
+- Remove the inline execution warning from the visualization while retaining the two-click **Are you sure?** confirmation.
+
 ## 0.6.7
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.7)

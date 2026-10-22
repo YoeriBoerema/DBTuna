@@ -183,6 +183,12 @@ try {
   await first
     .getByRole("button", { name: "Cancel execution", exact: true })
     .click();
+  if (await page.evaluate(
+    (id) => window.__messages.some(
+      (m) => m.type === "CANCEL_ACTUAL" && m.requestId === id,
+    ), repeat.requestId,
+  )) throw Error("First cancellation click sent a cancellation request");
+  await first.getByRole("button", { name: "Are you sure?", exact: true }).click();
   if (
     !(await page.evaluate(
       (id) =>

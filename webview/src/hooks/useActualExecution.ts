@@ -12,6 +12,7 @@ export function useActualExecution(plan: QueryPlan) {
   const error = "error" in state ? state.error : "";
   const [mode, setMode] = useState<"estimated" | "actual">("estimated");
   const [armed, setArmed] = useState(false);
+  const [cancelArmed, setCancelArmed] = useState(false);
   const active = useRef<string | undefined>(undefined);
   const pending = status === "confirming" || status === "running";
   useEffect(() => setArmed(false), [plan]);
@@ -25,7 +26,10 @@ export function useActualExecution(plan: QueryPlan) {
       )
         return;
       dispatch({ type: "result", message, now: Date.now() });
-      if (message.status !== "running") active.current = undefined;
+      if (message.status !== "running") {
+        active.current = undefined;
+        setCancelArmed(false);
+      }
       if (message.status === "complete") setMode("actual");
     };
     window.addEventListener("message", listener);
@@ -50,6 +54,7 @@ export function useActualExecution(plan: QueryPlan) {
       return;
     }
     setArmed(false);
+    setCancelArmed(false);
     const requestId = crypto.randomUUID();
     active.current = requestId;
     dispatch({ type: "start", requestId });
@@ -57,12 +62,18 @@ export function useActualExecution(plan: QueryPlan) {
     api.postMessage({ type: "RUN_ACTUAL", planId: plan.id, requestId });
   };
   const cancel = () => {
-    if (active.current)
-      api.postMessage({ type: "CANCEL_ACTUAL", requestId: active.current });
+    if (!active.current) return;
+    if (!cancelArmed) {
+      setCancelArmed(true);
+      return;
+    }
+    setCancelArmed(false);
+    api.postMessage({ type: "CANCEL_ACTUAL", requestId: active.current });
   };
   return {
     actual,
     armed,
+    cancelArmed,
     mode,
     setMode,
     status,

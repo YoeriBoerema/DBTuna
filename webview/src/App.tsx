@@ -34,6 +34,8 @@ function App() {
     batch?.items.filter((item) => item.status === "complete").length || 0;
   const failed =
     batch?.items.filter((item) => item.status === "error").length || 0;
+  const skipped =
+    batch?.items.filter((item) => item.status === "skipped").length || 0;
   useEffect(() => {
     const listener = (event: MessageEvent<ExtensionToWebview>) => {
       const m = event.data;
@@ -148,6 +150,7 @@ function App() {
             {batch.items.length}{" "}
             {batch.items.length === 1 ? "query" : "queries"} · {completed}{" "}
             planned{failed ? ` · ${failed} failed` : ""}
+            {skipped ? ` · ${skipped} skipped` : ""}
             {running
               ? " · planning…"
               : batch.items.some((item) => item.status === "cancelled")
@@ -176,7 +179,9 @@ function App() {
                           ? "Planning…"
                           : item.status === "error"
                             ? "Failed"
-                            : "Cancelled"}
+                            : item.status === "skipped"
+                              ? "Skipped"
+                              : "Cancelled"}
                   </span>
                   {item.plan && (
                     <span className="query-cost">
@@ -201,7 +206,7 @@ function App() {
                 ) : item.error ? (
                   <div
                     role={item.status === "error" ? "alert" : "status"}
-                    className="query-error"
+                    className={item.status === "skipped" ? "query-skipped" : "query-error"}
                   >
                     {item.error}
                   </div>

@@ -21,7 +21,7 @@ export const batchItemSchema = z.discriminatedUnion("status", [
   }),
   z.object({
     ...itemFields,
-    status: z.enum(["error", "cancelled"]),
+    status: z.enum(["error", "cancelled", "skipped"]),
     error: z.string().default("Query did not complete."),
     plan: z.never().optional(),
   }),

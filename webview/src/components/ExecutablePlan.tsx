@@ -9,6 +9,7 @@ export function ExecutablePlan(
   const {
     actual,
     armed,
+    cancelArmed,
     mode,
     setMode,
     status,
@@ -56,7 +57,11 @@ export function ExecutablePlan(
               ? "Run again and collect actual plan"
               : "Run query and collect actual plan"}
         </button>
-        {pending && <button onClick={cancel}>Cancel execution</button>}
+        {pending && (
+          <button onClick={cancel}>
+            {cancelArmed ? "Are you sure?" : "Cancel execution"}
+          </button>
+        )}
         <span role="status">
           {status === "confirming"
             ? "Preparing execution..."
@@ -67,12 +72,6 @@ export function ExecutablePlan(
                 : ""}
         </span>
       </div>
-      {armed && (
-        <div role="status">
-          This executes the displayed query on its original connection. INSERT
-          changes persist; running again repeats the query.
-        </div>
-      )}
       {error && (
         <div role="alert" className="execution-error">
           {error}

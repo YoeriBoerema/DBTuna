@@ -229,13 +229,13 @@ test("three identical semicolon-separated SQL Server queries become three indepe
     prepareBatch(splitTsqlBatch(text), "sqlserver"),
     async (sql) => {
       calls++;
-      assert.equal(sql, text);
-      return adapter.parseStatements(native);
+      assert.equal(sql, query);
+      return [adapter.parseStatements(native)[calls - 1]];
     },
     new AbortController().signal,
     () => {},
   );
-  assert.equal(calls, 1); // Preserve compilation context; never run separate user statements.
+  assert.equal(calls, 3); // Compile independent statements separately; never execute them.
   assert.equal(result.items.length, 3);
   assert.deepEqual(
     result.items.map((item) => item.index),
