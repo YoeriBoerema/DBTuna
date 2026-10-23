@@ -61,12 +61,17 @@ test("explorer loads lazily, caches folders and discards cancelled stale metadat
     const roots = await explorer.getChildren();
     assert.equal(calls, 0);
     assert.equal(roots[0].label, "Test connection");
+    assert.equal(
+      explorer.getTreeItem(roots[0]).contextValue,
+      "dbtuna.database",
+    );
     const pending = explorer.getChildren(roots[0]);
     await new Promise((done) => setImmediate(done));
     const same = explorer.getChildren(roots[0]);
     assert.equal(calls, 1);
     resolve!([{ name: "public", detail: "" }]);
     const schemas = await pending;
+    assert.equal(explorer.getTreeItem(schemas[0]).contextValue, undefined);
     assert.deepEqual(await same, schemas);
     await explorer.getChildren(roots[0]);
     assert.equal(calls, 1);

@@ -19,6 +19,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 | Two graph views | Choose compact horizontal or top-down cards, with pan, zoom and operator navigation. |
 | Offline inspection | Import PostgreSQL JSON, SQL Server Showplan XML, Oracle native JSON/DBMS_XPLAN text or DBTuna JSON through the Command Palette. |
 | AI assistance | Supply an OpenAI API key and model, then explicitly request a score, short suggestions and proposed SQL. |
+| Database relationships | Open a database-wide diagram from its Explorer connection, with schema groups, column-level foreign keys, accessible line colors/patterns and independent rerouting. See [table relationships](docs/table-relationships.md). |
 
 **Explain Query collects estimates. Run query executes SQL. Successful INSERT runs commit changes.** See [actual execution](docs/getting-started.md#collect-an-actual-plan) before running writes.
 
@@ -30,7 +31,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 4. For live plans, open a trusted workspace and run **DBTuna: Add Connection**.
 5. Select SQL in an editor, then run **DBTuna: Explain Query** from the Command Palette or editor context menu.
 
-The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.7.3**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
+The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.8.0**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
 
 Oracle Database is new in **0.7.0 - The Oracle Has Arrived!** It supports estimated plans, confirmed actual SELECT/INSERT, query batches, local analysis, AI assistance and plan imports. See the [Oracle guide](docs/oracle-support.md) for service-name setup, permissions and testing limits.
 

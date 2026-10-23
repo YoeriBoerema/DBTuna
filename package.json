@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "publisher": "dbtuna-local",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
@@ -21,6 +21,8 @@
   ],
   "main": "./dist/extension.cjs",
   "activationEvents": [
+    "onStartupFinished",
+    "onView:dbtuna.databaseExplorer",
     "onCommand:dbtuna.doom"
   ],
   "workspaces": [
@@ -48,7 +50,29 @@
     "test:databases": "node test/integration/databases.mjs"
   },
   "contributes": {
+    "configuration": {
+      "title": "DBTuna",
+      "properties": {
+        "dbtuna.alwaysShowDatabaseExplorer": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "title": "Always Show Database Explorer",
+          "description": "Reveal the Database Explorer when VS Code starts. Enabling this setting also reveals it immediately."
+        }
+      }
+    },
     "commands": [
+      {
+        "command": "dbtuna.showExplorer",
+        "title": "DBTuna: Show Database Explorer",
+        "icon": "$(database)"
+      },
+      {
+        "command": "dbtuna.visualizeRelationships",
+        "title": "DBTuna: Visualize Table Relationships",
+        "icon": "$(type-hierarchy)"
+      },
       {
         "command": "dbtuna.explainQuery",
         "title": "DBTuna: Explain Query",
@@ -144,6 +168,19 @@
           "command": "dbtuna.addConnection",
           "when": "view == dbtuna.databaseExplorer",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "dbtuna.visualizeRelationships",
+          "when": "view == dbtuna.databaseExplorer && viewItem == dbtuna.database",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dbtuna.visualizeRelationships",
+          "when": "false"
         }
       ]
     },

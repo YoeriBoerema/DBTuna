@@ -57,6 +57,8 @@ export class DatabaseExplorer
         : vscode.TreeItemCollapsibleState.Collapsed,
     );
     item.id = node.id;
+    if (node.profile && node.kind === "schemas")
+      item.contextValue = "dbtuna.database";
     if (node.id === "empty")
       item.command = {
         command: "dbtuna.addConnection",

@@ -7,6 +7,11 @@ import yauzl from "yauzl";
 // Compare the runtime entry points with this checkout's freshly built bundles.
 export function verifyVsix(path, manifest, root = process.cwd()) {
   const required = new Map([
+    ["extension/dist/relationships.js", resolve(root, "dist/relationships.js")],
+    [
+      "extension/dist/relationships.css",
+      resolve(root, "dist/relationships.css"),
+    ],
     ["extension/dist/extension.cjs", resolve(root, "dist/extension.cjs")],
     ["extension/dist/webview.js", resolve(root, "dist/webview.js")],
     ["extension/dist/webview.css", resolve(root, "dist/webview.css")],

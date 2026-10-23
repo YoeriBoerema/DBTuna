@@ -2,6 +2,17 @@
 
 [Documentation](README.md) · [Development](development.md)
 
+## 0.8.0 release verification — 24 October 2026
+
+- Formatting, TypeScript and ESLint passed.
+- All 133 unit tests passed, including database-wide metadata aggregation, cross-schema/composite keys, measured schema separation, column anchors, obstacle-aware routing and cancellation.
+- All ten headless Edge browser suites passed, including database diagram drag/reroute behavior, matching colors/arrowheads, redundant schema line patterns, deuteranopia simulation and reference light/dark contrast checks.
+- Packaging verifies the manifest and archived runtime bundle hashes, including the relationship viewer JavaScript and CSS.
+- The isolated VS Code activation test could not start because the installed VS Code reports an update mutex is held. This is an environment block, not a passing host test.
+- Live database integration tests were not rerun for this release; catalog permissions and engine/version differences still require live validation.
+
+Earlier database and host verification is recorded below.
+
 Verification recorded **23 October 2026** for **0.7.1** Source version: [build information](build-info.md). Results describe this development environment, not a guarantee across every database/version.
 
 ## Release checks

@@ -5,6 +5,7 @@ import type { Profile } from "../connection/profile";
 export type MetadataKind =
   | "schemas"
   | "tables"
+  | "relationships"
   | "columns"
   | "primaryKeys"
   | "foreignKeys"
@@ -29,12 +30,17 @@ export function catalogQuery(
   scope: MetadataScope,
 ): MetadataQuery {
   if (kind !== "schemas" && !scope.schema) throw Error("Schema is required.");
-  if (kind !== "schemas" && kind !== "tables" && !scope.table)
+  if (
+    kind !== "schemas" &&
+    kind !== "tables" &&
+    kind !== "relationships" &&
+    !scope.table
+  )
     throw Error("Table is required.");
   const values =
     kind === "schemas"
       ? []
-      : kind === "tables"
+      : kind === "tables" || kind === "relationships"
         ? [scope.schema!]
         : [scope.schema!, scope.table!];
   const sql = catalogs[engine][kind];

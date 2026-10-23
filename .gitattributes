@@ -1,2 +1,7 @@
 * text=auto eol=lf
 *.png binary
+# Integrity manifests for these bundled upstream assets describe CRLF bytes.
+vendor/doom/default.cfg text eol=crlf
+vendor/doom/FREEDOOM-COPYING text eol=crlf
+vendor/doom/FREEDOOM-CREDITS text eol=crlf
+vendor/doom/FREEDOOM-MUSIC-CREDITS text eol=crlf

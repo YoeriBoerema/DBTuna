@@ -1,0 +1,185 @@
+html,
+body,
+#root,
+main {
+  height: 100%;
+  margin: 0;
+}
+body {
+  --schema-palette-0: #0072b2;
+  --schema-palette-1: #e69f00;
+  --schema-palette-2: #56b4e9;
+  --schema-palette-3: #d55e00;
+  --schema-palette-4: #cc79a7;
+  --schema-palette-5: #009e73;
+  --schema-palette-6: #f0e442;
+  font-family: var(--vscode-font-family, sans-serif);
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-editor-background);
+}
+main {
+  display: flex;
+  flex-direction: column;
+}
+header {
+  position: relative;
+  padding: 16px 280px 16px 24px;
+  border-bottom: 1px solid var(--vscode-panel-border, #555);
+}
+h1 {
+  font-size: 19px;
+  margin: 0 0 8px;
+}
+p {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.8;
+}
+.react-flow {
+  flex: 1;
+  background: var(--vscode-editor-background);
+  --xy-controls-button-background-color: var(--vscode-editorWidget-background);
+  --xy-controls-button-color: var(--vscode-editor-foreground);
+  --xy-minimap-background-color: var(--vscode-editorWidget-background);
+}
+.table {
+  width: 260px;
+  box-sizing: border-box;
+  border: 1px solid
+    var(--schema-color, var(--vscode-textLink-foreground, #70aaff));
+  border-radius: 8px;
+  background: var(--vscode-editorWidget-background, #252526);
+  box-shadow: 0 4px 16px #0003;
+  overflow: visible;
+}
+.table.external {
+  border-style: dashed;
+}
+.table small,
+.table strong {
+  display: block;
+  padding: 7px 14px 0;
+  overflow-wrap: anywhere;
+}
+.table small {
+  opacity: 0.65;
+  font-size: 11px;
+}
+.table strong {
+  font-size: 14px;
+  padding-bottom: 12px;
+}
+.columns {
+  border-top: 1px solid var(--vscode-panel-border, #555);
+  padding: 0;
+  line-height: 22px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.columns em {
+  opacity: 0.6;
+  display: block;
+  padding: 5px 14px;
+}
+.column-row {
+  position: relative;
+  min-height: 32px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 5px 14px;
+}
+.column-row + .column-row {
+  border-top: 1px solid var(--vscode-panel-border, #555);
+}
+.column-row:hover {
+  background: var(--vscode-list-hoverBackground, #ffffff0d);
+}
+.column-row .react-flow__handle {
+  top: 50%;
+  background: var(--schema-color, var(--vscode-textLink-foreground, #70aaff));
+  border-color: var(--vscode-editor-background, #181c25);
+}
+footer {
+  padding: 12px 24px;
+  font-size: 12px;
+  border-top: 1px solid var(--vscode-panel-border, #555);
+  min-height: 16px;
+}
+.empty {
+  padding: 32px;
+}
+.schema-group {
+  background: color-mix(
+    in srgb,
+    var(--schema-color, #70aaff) 5%,
+    var(--vscode-editor-background)
+  );
+  border: 1px dashed
+    color-mix(
+      in srgb,
+      var(--schema-color, #70aaff) 45%,
+      var(--vscode-editor-background)
+    );
+  border-radius: 14px;
+}
+.schema-label {
+  padding: 18px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+.schema-line-sample {
+  display: inline-block;
+  margin-right: 9px;
+  vertical-align: middle;
+  color: var(--schema-color, #70aaff);
+}
+body.vscode-light {
+  --schema-palette-1: #9c6b00;
+  --schema-palette-2: #007fa8;
+  --schema-palette-6: #7a7100;
+}
+body.vscode-high-contrast-light {
+  --schema-palette-1: #9c6b00;
+  --schema-palette-2: #007fa8;
+  --schema-palette-6: #7a7100;
+}
+.relationship-label {
+  position: absolute;
+  font-size: 12px;
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #252526);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-panel-border, #555);
+  pointer-events: all;
+}
+header button {
+  padding: 6px 12px;
+  color: var(--vscode-button-foreground, white);
+  background: var(--vscode-button-background, #2265a3);
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.diagram-actions {
+  position: absolute;
+  right: 24px;
+  top: 16px;
+  display: flex;
+  gap: 8px;
+}
+header button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+@media (max-width: 850px) {
+  header {
+    padding-right: 24px;
+  }
+  .diagram-actions {
+    position: static;
+    margin-bottom: 10px;
+  }
+}

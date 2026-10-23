@@ -2,6 +2,18 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.8.0
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.8.0)
+
+- Add a database-wide table relationship diagram for PostgreSQL, SQL Server and Oracle, opened directly from a database connection in the Database Explorer without connection or schema prompts.
+- Show foreign-key column rows, dividers, column-level arrows, composite keys, self-references and cross-schema relationships, including disconnected tables.
+- Group tables by schema with wide spacing and measured card sizes; add independent obstacle-aware routing with crossing/overlap penalties, parallel lane candidates and bounded optimization.
+- Add Auto layout and Reroute lines controls, preserving manual table placement when rerouting, plus relationship highlighting and dimming.
+- Use an Okabe–Ito-based palette and redundant line patterns, matching schema legends and theme-aware contrast; verify with deuteranopia simulation.
+- Add Show Database Explorer and an enabled-by-default Always Show Database Explorer setting.
+- Verify diagram JavaScript/CSS inside packaged VSIX files, and preserve bundled asset line endings for reproducible integrity checks.
+
 ## 0.7.3
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.3)

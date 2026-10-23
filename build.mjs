@@ -23,6 +23,14 @@ await build({
 });
 
 await mkdir("dist/doom", { recursive: true });
+await build({
+  entryPoints: ["webview/relationships/App.tsx"],
+  outfile: "dist/relationships.js",
+  bundle: true,
+  platform: "browser",
+  format: "iife",
+  minify: true,
+});
 await cp("vendor/doom", "dist/doom", { recursive: true });
 await cp("webview/doom/style.css", "dist/doom.css");
 await build({

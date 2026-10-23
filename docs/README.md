@@ -11,6 +11,7 @@ DBTuna visualizes PostgreSQL, SQL Server and Oracle plans inside VS Code. This d
 | [SQL Server](sqlserver-support.md) | Authentication, GO batches, Showplan import and actual execution limits |
 | [Oracle Database](oracle-support.md) | Service/PDB connections, estimated/actual plans, Oracle SQL boundaries and permissions |
 | [AI assistance](ai-assistance.md) | API-key/model setup, submitted data, scoring and suggestions |
+| [Table relationships](table-relationships.md) | Database-wide diagrams, column-level foreign keys, schema grouping, accessible colors/patterns and routing controls |
 | [Troubleshooting](troubleshooting.md) | Missing options, disabled execution and common errors |
 | [Security](security.md) | Credentials, trust, execution, imports and external requests |
 
@@ -20,6 +21,7 @@ DBTuna visualizes PostgreSQL, SQL Server and Oracle plans inside VS Code. This d
 | --- | --- |
 | [Development](development.md) | Local setup, builds, verification, screenshots and VSIX packaging |
 | [Architecture](architecture.md) | Module responsibilities, canonical data and asynchronous state |
+| [Diagram routing](diagram-routing.md) | Independent routing algorithm, published background, limits and regression coverage |
 | [Adding a connector](adapter-development.md) | Native parsing, live collectors and extension boundaries |
 | [Verification](verification.md) | Current evidence, integration setup and remaining gaps |
 | [Changelog](../CHANGELOG.md) | Published releases and current-source changes |

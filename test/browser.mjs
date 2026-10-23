@@ -5,6 +5,7 @@ const environment = {
     : "0",
 };
 for (const file of [
+  "render-relationships.mjs",
   "render.mjs",
   "render-ai.mjs",
   "render-execution.mjs",

@@ -1,4 +1,5 @@
 import { DatabaseExplorer } from "./metadata/databaseExplorer";
+import { openRelationships } from "./metadata/relationshipPanel";
 import * as vscode from "vscode";
 import { ExecutionManager } from "./services/executionManager";
 import { ExplainCoordinator } from "./services/explainCoordinator";
@@ -25,6 +26,13 @@ export async function activate(context: vscode.ExtensionContext) {
   const explorer = new DatabaseExplorer(connections);
   context.subscriptions.push(
     explorer,
+    vscode.commands.registerCommand("dbtuna.showExplorer", () =>
+      vscode.commands.executeCommand("dbtuna.databaseExplorer.focus"),
+    ),
+    vscode.commands.registerCommand(
+      "dbtuna.visualizeRelationships",
+      (node: unknown) => openRelationships(context, connections, node),
+    ),
     vscode.window.registerTreeDataProvider("dbtuna.databaseExplorer", explorer),
     vscode.commands.registerCommand("dbtuna.refreshExplorer", () =>
       explorer.refresh(),
@@ -119,5 +127,26 @@ export async function activate(context: vscode.ExtensionContext) {
     cancel,
   );
   command("explainQuery", () => explain.explain());
+  const revealExplorer = () => {
+    if (
+      vscode.workspace
+        .getConfiguration("dbtuna")
+        .get<boolean>("alwaysShowDatabaseExplorer", true)
+    )
+      void vscode.commands
+        .executeCommand("dbtuna.databaseExplorer.focus", {
+          preserveFocus: true,
+        })
+        .then(undefined, () => {
+          // A closing window may dispose the view while it is being revealed.
+        });
+  };
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("dbtuna.alwaysShowDatabaseExplorer"))
+        revealExplorer();
+    }),
+  );
+  revealExplorer();
 }
 export function deactivate() {}
