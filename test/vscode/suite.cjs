@@ -17,9 +17,16 @@ exports.run = async () => {
     "aiSetApiKey",
     "aiSelectModel",
     "aiRemoveApiKey",
+    "refreshExplorer",
   ])
     assert.ok(commands.includes("dbtuna." + id));
   assert.ok(commands.includes("dbtuna.doom"));
+  assert.ok(
+    ext.packageJSON.contributes.views.explorer.some(
+      (view) => view.id === "dbtuna.databaseExplorer",
+    ),
+  );
+  await vscode.commands.executeCommand("dbtuna.refreshExplorer");
   const inputs = [],
     errors = [];
   const originalInput = vscode.window.showInputBox;

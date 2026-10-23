@@ -7,10 +7,13 @@ import { ProfileRepository } from "./profileRepository";
 import { configureConnection } from "./connectionWizard";
 export class ConnectionManager {
   private repository: ProfileRepository;
+  private changed = new vscode.EventEmitter<void>();
+  readonly onDidChange = this.changed.event;
   constructor(
     context: vscode.ExtensionContext,
     private onSpecialName?: (name: string) => Promise<boolean>,
   ) {
+    context.subscriptions.push(this.changed);
     this.repository = new ProfileRepository(
       context.globalState,
       context.secrets,
@@ -57,6 +60,7 @@ export class ConnectionManager {
     const result = await configureConnection(existing, this.onSpecialName);
     if (!result) return;
     await this.repository.save(result.profile, result.password);
+    this.changed.fire();
     return result.profile;
   }
   async manage() {
@@ -82,6 +86,9 @@ export class ConnectionManager {
         "DBTuna: Connection succeeded.",
       );
     }
-    if (action === "Remove Connection") await this.repository.remove(p);
+    if (action === "Remove Connection") {
+      await this.repository.remove(p);
+      this.changed.fire();
+    }
   }
 }

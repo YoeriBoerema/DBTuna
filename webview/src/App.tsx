@@ -14,9 +14,6 @@ function App() {
     batch,
     firstPlan,
     running,
-    completed,
-    failed,
-    skipped,
     view,
     setView,
     error,
@@ -88,15 +85,7 @@ function App() {
         </div>
       )}
       {batch ? (
-        <BatchPlans
-          batch={batch}
-          view={view}
-          revision={revision}
-          completed={completed}
-          failed={failed}
-          skipped={skipped}
-          running={running}
-        />
+        <BatchPlans batch={batch} view={view} revision={revision} />
       ) : plan ? (
         <div className="single-plan">
           <ReactFlowProvider>

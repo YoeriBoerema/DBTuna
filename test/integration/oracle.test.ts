@@ -1,3 +1,4 @@
+import { verifyMetadata } from "../helpers/metadata";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
@@ -40,6 +41,7 @@ test(
     );
     connection.callTimeout = 10000;
     const table = "DBTUNA_" + randomBytes(6).toString("hex").toUpperCase();
+    await verifyMetadata(profile, password, (sql) => connection.execute(sql));
     const adapter = new OracleAdapter();
     const count = async () =>
       Number(

@@ -1,3 +1,4 @@
+import { DatabaseExplorer } from "./metadata/databaseExplorer";
 import * as vscode from "vscode";
 import { ExecutionManager } from "./services/executionManager";
 import { ExplainCoordinator } from "./services/explainCoordinator";
@@ -21,6 +22,16 @@ export async function activate(context: vscode.ExtensionContext) {
     return true;
   });
   await connections.initialize();
+  const explorer = new DatabaseExplorer(connections);
+  context.subscriptions.push(
+    explorer,
+    vscode.window.registerTreeDataProvider("dbtuna.databaseExplorer", explorer),
+    vscode.commands.registerCommand("dbtuna.refreshExplorer", () =>
+      explorer.refresh(),
+    ),
+    connections.onDidChange(() => explorer.refresh()),
+    vscode.workspace.onDidGrantWorkspaceTrust(() => explorer.refresh()),
+  );
   const cancel = () => {
     explain?.cancel();
     assistance?.cancel();

@@ -6,30 +6,15 @@ export function BatchPlans({
   batch,
   view,
   revision,
-  completed,
-  failed,
-  skipped,
-  running,
 }: {
   batch: PlanBatch;
   view: PlanView;
   revision: number;
-  completed: number;
-  failed: number;
-  skipped: number;
-  running: boolean;
 }) {
   return (
     <>
       <div className="batch-summary" role="status">
-        {batch.items.length} {batch.items.length === 1 ? "query" : "queries"} ·{" "}
-        {completed} planned{failed ? ` · ${failed} failed` : ""}
-        {skipped ? ` · ${skipped} skipped` : ""}
-        {running
-          ? " · planning…"
-          : batch.items.some((item) => item.status === "cancelled")
-            ? " · cancelled"
-            : " · finished"}
+        {batch.items.length} {batch.items.length === 1 ? "query" : "queries"}
         <small>
           Explain collects estimates only. Use a query's Run action to execute
           it and collect an actual plan; INSERT changes persist.

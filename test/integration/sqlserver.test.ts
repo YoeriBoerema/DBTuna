@@ -1,3 +1,4 @@
+import { verifyMetadata } from "../helpers/metadata";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -40,6 +41,7 @@ test(
       await query(
         `CREATE TABLE ${table} (id int PRIMARY KEY, name nvarchar(100)); INSERT INTO ${table} VALUES (1,N'one');`,
       );
+      await verifyMetadata(p, password, query);
       try {
         for (const sql of [
           `SELECT TOP (1) * FROM ${table} WHERE id=1`,

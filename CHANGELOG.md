@@ -2,6 +2,13 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.7.3
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.3)
+
+- Add a lazy Database Explorer for PostgreSQL, SQL Server and Oracle schemas, tables, columns, primary/foreign keys, unique constraints and indexes, with refresh, cancellation and permission-aware empty states.
+- Simplify the visualization batch summary to its dynamic query count.
+
 ## 0.7.2
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.2)

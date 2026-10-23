@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "publisher": "dbtuna-local",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
@@ -93,6 +93,11 @@
       {
         "command": "dbtuna.aiRemoveApiKey",
         "title": "DBTuna: AI Assistance: Remove API Key"
+      },
+      {
+        "command": "dbtuna.refreshExplorer",
+        "title": "DBTuna: Refresh Database Explorer",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -128,12 +133,39 @@
           "command": "dbtuna.aiRemoveApiKey",
           "group": "1_settings"
         }
+      ],
+      "view/title": [
+        {
+          "command": "dbtuna.refreshExplorer",
+          "when": "view == dbtuna.databaseExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "dbtuna.addConnection",
+          "when": "view == dbtuna.databaseExplorer",
+          "group": "navigation"
+        }
       ]
     },
     "submenus": [
       {
         "id": "dbtuna.aiMenu",
         "label": "DBTuna: AI Assistance"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "dbtuna.databaseExplorer",
+          "name": "DBTuna Database Explorer",
+          "contextualTitle": "DBTuna"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "dbtuna.databaseExplorer",
+        "contents": "Browse schemas, tables, columns, keys and indexes. Only objects visible to your database account are shown. Use Refresh to reload metadata."
       }
     ]
   },

@@ -1,3 +1,4 @@
+import { verifyMetadata } from "../helpers/metadata";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { writeFileSync, readFileSync } from "node:fs";
@@ -53,6 +54,22 @@ test(
       await c.query("INSERT INTO \"DPF_TMP_HASH_17\" VALUES ('OLD', 1)");
       await c.query("INSERT INTO \"DPF_TMP_SEED_16\" VALUES (1, 'NEW')");
     });
+    await withClient(config, (c) =>
+      verifyMetadata(
+        {
+          id: "metadata",
+          name: "Metadata",
+          type: "postgresql",
+          host: config.host,
+          port: config.port,
+          database: config.database,
+          user: config.user,
+          ssl: "disable",
+        },
+        config.password!,
+        (sql) => c.query(sql),
+      ),
+    );
     const a = new PostgresAdapter();
     for (const sql of [
       "SELECT * FROM orders",

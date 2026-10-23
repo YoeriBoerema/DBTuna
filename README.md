@@ -30,7 +30,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 4. For live plans, open a trusted workspace and run **DBTuna: Add Connection**.
 5. Select SQL in an editor, then run **DBTuna: Explain Query** from the Command Palette or editor context menu.
 
-The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.7.2**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
+The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.7.3**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
 
 Oracle Database is new in **0.7.0 - The Oracle Has Arrived!** It supports estimated plans, confirmed actual SELECT/INSERT, query batches, local analysis, AI assistance and plan imports. See the [Oracle guide](docs/oracle-support.md) for service-name setup, permissions and testing limits.
 
@@ -76,3 +76,11 @@ Development requires Node.js 22 or later. `npm run verify` runs type checks, lin
 DBTuna's original project code and materials on the current branch use the [DBTuna Non-Commercial, No-Resale License](LICENSE). Non-commercial use, modification and free sharing are permitted. Commercial use, including internal commercial business use, and sale or resale are prohibited without a separate written license from the copyright holders. These restrictions also cover modified versions and substantial portions incorporated into other products.
 
 Third-party components retain their own licenses. Previously released MIT versions, including v0.7.1 and earlier, retain their original permissions; this change does not retroactively restrict those copies. This is a source-available license with commercial restrictions, not an open-source license.
+
+## Database Explorer
+
+Open **Explorer** in VS Code and expand **DBTuna Database Explorer**. Expand a saved connection to browse schemas and tables, then expand a table for columns, primary keys, foreign keys, unique constraints and indexes. Hover over an item for its native type or definition. Use the view’s **Add Connection** and **Refresh Database Explorer** actions to manage connections and reload metadata. Refresh also cancels outstanding metadata reads.
+
+Folders load on demand and cache results in memory until refresh, connection changes or extension restart. Browsing reads database catalogs only and requires a trusted workspace. Database permissions limit what is visible; an empty folder does not prove an object is absent. Connections remain scoped to their configured database or Oracle service/PDB.
+
+This first version focuses on ordinary tables. Views, partition details, synonyms and other specialized objects are outside its scope. Native types and definitions remain engine-specific text; this is a browsing model, not a schema migration or type-conversion system. Oracle column defaults and function-based index expressions are not expanded. A folder containing more than 2,000 entries reports a limit rather than silently showing a partial result. SQL Server metadata browsing uses STRING_AGG and requires SQL Server 2017 or later.

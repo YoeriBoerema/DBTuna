@@ -86,7 +86,7 @@ try {
   );
   await page
     .locator(".batch-summary")
-    .getByText(/1 skipped/)
+    .getByText(/^3 queries/)
     .waitFor();
   const skipped = page.getByRole("region", { name: "Query 3", exact: true });
   await skipped.getByText("Skipped", { exact: true }).waitFor();
