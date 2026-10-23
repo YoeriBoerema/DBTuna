@@ -8,7 +8,7 @@ import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { databaseConnector } from "../connectors/registry";
 export function prepareBatch(
   statements: string[],
-  type: "postgresql" | "sqlserver" = "postgresql",
+  type: "postgresql" | "sqlserver" | "oracle" = "postgresql",
 ): PlanBatch {
   return validateBatch({
     kind: "dbtuna-batch",

@@ -25,7 +25,7 @@ Estimated collection, confirmed actual execution and optional AI advice are sepa
 | `src/extension/connection/` | Driver sessions, profile repository and setup wizard |
 | `src/extension/ai/` | Advice input, instructions, model/credential setup and bounded API transport |
 | `packages/adapter-sdk/` | Native parser contract and registry |
-| `packages/adapter-postgres/`, `packages/adapter-sqlserver/` | Engine-specific normalization |
+| `packages/adapter-postgres/`, `packages/adapter-sqlserver/`, `packages/adapter-oracle/` | Engine-specific normalization |
 | `packages/plan-analysis/` | Database fact extractors, applicability/coverage, pure individual rules and finding contracts |
 | `scripts/` | Version-derived packaging, VSIX verification and generated build information |
 | `webview/src/styles/` | Feature styles imported in explicit cascade order |
@@ -49,6 +49,8 @@ Cost and runtime scopes are explicit: SQL Server subtree costs differ from opera
 PostgreSQL splits semicolon-delimited SQL lexically, validates each candidate using an AST parser and collects estimates in independent read-only transactions. Actual execution has a separate transaction that commits on success.
 
 SQL Server preserves each GO-delimited compilation batch, then displays returned statements separately. Its adapter parses XML once, enforces whole-document limits and normalizes each statement tree. Scoped XML is serialized for native metadata without reparsing or decoding entities again. Actual collection identifies the selected statement among returned plans.
+
+Oracle uses an Oracle-aware lexer and structured PLAN_TABLE estimates with diagnostic rollback. Actual collection uses a unique execution tag, exact SQL_ID/child-cursor statistics, fully drained SELECT results and explicit INSERT commit after plan validation. Native rows normalize through adapter-oracle; Oracle fact extraction discloses unsupported measurements and suppresses uncertain parallel/adaptive comparisons.
 
 ## State and messages
 

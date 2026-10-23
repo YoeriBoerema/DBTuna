@@ -10,6 +10,14 @@ export function verifyVsix(path, manifest, root = process.cwd()) {
     ["extension/dist/extension.cjs", resolve(root, "dist/extension.cjs")],
     ["extension/dist/webview.js", resolve(root, "dist/webview.js")],
     ["extension/dist/webview.css", resolve(root, "dist/webview.css")],
+    [
+      "extension/dist/licenses/oracledb/LICENSE.txt",
+      resolve(root, "dist/licenses/oracledb/LICENSE.txt"),
+    ],
+    [
+      "extension/dist/licenses/oracledb/NOTICE.txt",
+      resolve(root, "dist/licenses/oracledb/NOTICE.txt"),
+    ],
   ]);
   const digest = (value) => createHash("sha256").update(value).digest("hex");
   return new Promise((resolveResult, reject) => {

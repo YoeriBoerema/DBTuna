@@ -11,6 +11,7 @@ for (const file of [
   "render-sqlserver.mjs",
   "render-analysis.mjs",
   "render-estimated-analysis.mjs",
+  "render-oracle.mjs",
   "render-resize.mjs",
   "render-doom.mjs",
 ])

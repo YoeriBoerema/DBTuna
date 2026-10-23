@@ -12,7 +12,7 @@ Run **DBTuna: Load Sample Plan** for an offline demonstration. To use the latest
 
 1. Open a trusted workspace.
 2. Run **DBTuna: Add Connection**.
-3. Choose PostgreSQL or SQL Server and enter the host, explicit TCP port, database, user and TLS preference.
+3. Choose PostgreSQL, SQL Server or Oracle Database and enter the host, explicit TCP port, database, user and TLS preference.
 4. Enter the password; it is saved in VS Code SecretStorage.
 5. Run **DBTuna: Manage Connections**, select the profile, then choose **Test Connection**.
 
@@ -31,6 +31,8 @@ PostgreSQL splits statements at semicolons outside strings, identifiers and comm
 
 Each query section has an expandable SQL preview, status, estimated cost, graph and operator details. Invalid statements or collection failures appear in their own section. Cancel batch stops remaining work and retains finished plans. Off-screen graphs initialize as you scroll.
 
+Oracle uses service names/PDBs and a separate statement lexer. See the [Oracle guide](oracle-support.md) for skipped setup/PLSQL behavior, cursor privileges and actual-execution semantics.
+
 ## Explore a plan
 
 Select an operator to inspect its object, estimates, measured counters when available and native attributes. Hover for 0.5 seconds to open its cost tooltip. Optimizer cost units are not milliseconds and are not comparable across engines.
@@ -39,7 +41,7 @@ The Plan view selector switches between compact horizontal and top-down cards. C
 
 ## Collect an actual plan
 
-Operator details also include [local plan analysis](local-analysis.md), with evidence-backed rules for PostgreSQL and SQL Server. No API key is needed. Explain-only plans now include estimated volume, repeated-work, predicate and sort/hash risks, plus SQL Server native index candidates when available. Actual plans enable measured checks; use **Show whole query** to inspect findings from other operators.
+Operator details also include [local plan analysis](local-analysis.md), with evidence-backed rules for PostgreSQL, SQL Server and Oracle. No API key is needed. Explain-only plans now include estimated volume, repeated-work, predicate and sort/hash risks, plus SQL Server native index candidates when available. Actual plans enable measured checks; use **Show whole query** to inspect findings from other operators.
 
 After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Click once to change the button to **Are you sure?**, then click again to execute the displayed query on its original connection. Each run requires both clicks.
 
@@ -53,7 +55,7 @@ Execution requires a current live estimate on its original, unchanged connection
 
 ## Import and export
 
-Run **DBTuna: Import Execution Plan** from the Command Palette. It accepts raw PostgreSQL JSON, SQL Server `.sqlplan`/`.xml` including SSMS UTF-16, canonical DBTuna JSON and DBTuna batch envelopes. No connection or SQL execution is required.
+Run **DBTuna: Import Execution Plan** from the Command Palette. It accepts raw PostgreSQL JSON, SQL Server `.sqlplan`/`.xml` including SSMS UTF-16, Oracle native JSON/DBMS_XPLAN text, canonical DBTuna JSON and DBTuna batch envelopes. No connection or SQL execution is required.
 
 Run **DBTuna: Export Execution Plan** to save the loaded single plan or estimated batch, including SQL text, statuses, errors and native attributes when present. The single-plan Export button is also available. Import and batch export are Command Palette actions; the removed toolbar buttons are not required.
 

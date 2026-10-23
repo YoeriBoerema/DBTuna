@@ -1,0 +1,13 @@
+{
+  "kind": "dbtuna-oracle-native",
+  "nativeVersion": 1,
+  "planKind": "estimated",
+  "synthetic": true,
+  "version": "19c",
+  "query": "SELECT * FROM customers WHERE TRUNC(created_at) = DATE '2026-01-01' ORDER BY name",
+  "rows": [
+    { "ID": 0, "PARENT_ID": null, "OPERATION": "SELECT STATEMENT", "COST": 420, "CARDINALITY": 200000 },
+    { "ID": 1, "PARENT_ID": 0, "OPERATION": "SORT", "OPTIONS": "ORDER BY", "COST": 420, "CARDINALITY": 200000, "BYTES": 40000000 },
+    { "ID": 2, "PARENT_ID": 1, "OPERATION": "TABLE ACCESS", "OPTIONS": "FULL", "OBJECT_OWNER": "APP", "OBJECT_NAME": "CUSTOMERS", "COST": 200, "CARDINALITY": 200000, "FILTER_PREDICATES": "TRUNC(created_at) = DATE '2026-01-01'" }
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "name": "dbtuna",
   "displayName": "DBTuna",
-  "description": "Inspect PostgreSQL and SQL Server execution plans beside your SQL.",
-  "version": "0.6.14",
+  "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
+  "version": "0.7.0",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {
@@ -16,7 +16,8 @@
     "postgresql",
     "explain",
     "sql",
-    "sqlserver"
+    "sqlserver",
+    "oracle"
   ],
   "main": "./dist/extension.cjs",
   "activationEvents": [
@@ -39,7 +40,8 @@
     "test:embedded": "node test/integration/embedded.mjs",
     "format": "prettier --write src packages webview test scripts *.json *.mjs",
     "format:check": "prettier --check src packages webview test scripts *.json *.mjs",
-    "docs:versions": "node scripts/sync-build-info.mjs"
+    "docs:versions": "node scripts/sync-build-info.mjs",
+    "test:oracle": "tsx --test test/integration/oracle.test.ts"
   },
   "contributes": {
     "commands": [
@@ -141,6 +143,7 @@
     "@xyflow/react": "^12.0.0",
     "elkjs": "^0.11.0",
     "fast-xml-parser": "^5.11.2",
+    "oracledb": "6.10.0",
     "pg": "^8.16.0",
     "pgsql-ast-parser": "^12.0.0",
     "react": "^19.0.0",
@@ -150,6 +153,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/oracledb": "^6.10.4",
     "@types/pg": "^8.15.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

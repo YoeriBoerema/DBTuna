@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { clientConfig, withClient } from "./postgresClient";
 import { testSqlServer } from "./sqlServerClient";
+import { testOracle } from "./oracleClient";
 import type { Profile } from "./profile";
 import { ProfileRepository } from "./profileRepository";
 import { configureConnection } from "./connectionWizard";
@@ -72,6 +73,7 @@ export class ConnectionManager {
         throw Error("Trust the workspace first.");
       if (p.type === "sqlserver")
         await testSqlServer(p, await this.password(p));
+      else if (p.type === "oracle") await testOracle(p, await this.password(p));
       else
         await withClient(await this.config(p), async (c) => {
           await c.query("SELECT 1");

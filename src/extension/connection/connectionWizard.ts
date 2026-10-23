@@ -22,27 +22,42 @@ export async function configureConnection(
     [
       { label: "PostgreSQL", value: "postgresql" as const },
       { label: "SQL Server", value: "sqlserver" as const },
+      { label: "Oracle Database", value: "oracle" as const },
     ],
     { placeHolder: "Connection type", ignoreFocusOut: true },
   );
   if (!typeChoice) return;
   const type = typeChoice.value;
+  const previous = existing?.type === type ? existing : undefined;
   const name = await ask("Connection name", existing?.name);
   if (!existing && (await onSpecialName?.(name))) return;
   const host = await ask("Host", existing?.host || "localhost"),
     port = Number(
       await ask(
         "Port",
-        String(existing?.port || (type === "sqlserver" ? 1433 : 5432)),
+        String(
+          previous?.port ||
+            (type === "oracle" ? 1521 : type === "sqlserver" ? 1433 : 5432),
+        ),
       ),
     ),
     database = await ask(
-      "Database",
-      existing?.database || (type === "sqlserver" ? "master" : "postgres"),
+      type === "oracle" ? "Oracle service name / PDB (not SID)" : "Database",
+      previous?.database ||
+        (type === "oracle"
+          ? "FREEPDB1"
+          : type === "sqlserver"
+            ? "master"
+            : "postgres"),
     ),
     user = await ask(
       "Username",
-      existing?.user || (type === "sqlserver" ? "sa" : "postgres"),
+      previous?.user ||
+        (type === "oracle"
+          ? "dbtuna"
+          : type === "sqlserver"
+            ? "sa"
+            : "postgres"),
     );
   let authentication: "default" | "ntlm" | undefined;
   let domain: string | undefined;
@@ -78,6 +93,27 @@ export async function configureConnection(
     { placeHolder: "SSL configuration" },
   );
   if (!ssl) return;
+  let currentSchema: string | undefined, walletLocation: string | undefined;
+  if (type === "oracle") {
+    const schema = await vscode.window.showInputBox({
+      prompt: "Current schema (optional; blank uses the username)",
+      value: existing?.type === "oracle" ? existing.currentSchema : undefined,
+      ignoreFocusOut: true,
+    });
+    if (schema === undefined) return;
+    currentSchema = schema.trim() || undefined;
+    if (ssl.value === "verify") {
+      const wallet = await vscode.window.showInputBox({
+        prompt:
+          "Directory containing unencrypted ewallet.pem (optional for one-way TCPS)",
+        value:
+          existing?.type === "oracle" ? existing.walletLocation : undefined,
+        ignoreFocusOut: true,
+      });
+      if (wallet === undefined) return;
+      walletLocation = wallet.trim() || undefined;
+    }
+  }
   const password = await ask(
     "Password (stored in VS Code SecretStorage)",
     undefined,
@@ -94,6 +130,7 @@ export async function configureConnection(
     database,
     user,
     ssl: ssl.value,
+    ...(type === "oracle" ? { currentSchema, walletLocation } : {}),
   });
   return { profile: p, password };
 }

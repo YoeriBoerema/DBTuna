@@ -32,6 +32,17 @@ const sqlServerProfileSchema = z
 export const profileSchema = z.discriminatedUnion("type", [
   postgresProfileSchema,
   sqlServerProfileSchema,
+  z
+    .object({
+      ...common,
+      type: z.literal("oracle"),
+      ssl: z.enum(["disable", "verify"]),
+      authentication: z.never().optional(),
+      domain: z.never().optional(),
+      currentSchema: z.string().min(1).optional(),
+      walletLocation: z.string().min(1).optional(),
+    })
+    .strict(),
 ]);
 export type Profile = z.infer<typeof profileSchema>;
 // Compare only connection configuration. Field order and serialization do not define identity.
@@ -46,6 +57,10 @@ export function sameConnection(left: Profile, right: Profile): boolean {
     left.user === right.user &&
     left.ssl === right.ssl &&
     left.authentication === right.authentication &&
-    left.domain === right.domain
+    left.domain === right.domain &&
+    (left.type !== "oracle" ||
+      right.type !== "oracle" ||
+      (left.currentSchema === right.currentSchema &&
+        left.walletLocation === right.walletLocation))
   );
 }

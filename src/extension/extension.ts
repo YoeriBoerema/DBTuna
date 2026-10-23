@@ -6,12 +6,14 @@ import { AiAssistance } from "./ai/aiAssistance";
 import { AdapterRegistry } from "../../packages/adapter-sdk/src/registry";
 import { PostgresAdapter } from "../../packages/adapter-postgres/src/postgresAdapter";
 import { SqlServerAdapter } from "../../packages/adapter-sqlserver/src/sqlServerAdapter";
+import { OracleAdapter } from "../../packages/adapter-oracle/src/oracleAdapter";
 import { ConnectionManager } from "./connection/connectionManager";
 import { PanelManager } from "./webview/panelManager";
 export async function activate(context: vscode.ExtensionContext) {
   const registry = new AdapterRegistry([
     new PostgresAdapter(),
     new SqlServerAdapter(),
+    new OracleAdapter(),
   ]);
   const connections = new ConnectionManager(context, async (name) => {
     if (name.trim() !== "DOOMGUY") return false;

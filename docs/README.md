@@ -1,6 +1,6 @@
 # DBTuna documentation
 
-DBTuna visualizes PostgreSQL and SQL Server plans inside VS Code. This documentation describes the current main branch (see [build information](build-info.md) for its version). Published VSIX files are listed separately in [Releases](https://github.com/YoeriBoerema/DBTuna/releases); the latest published version is currently v0.6.14.
+DBTuna visualizes PostgreSQL, SQL Server and Oracle plans inside VS Code. This documentation describes the current main branch (see [build information](build-info.md) for its version). Published VSIX files are listed separately in [Releases](https://github.com/YoeriBoerema/DBTuna/releases); the latest published version is currently v0.7.0.
 
 ## Use DBTuna
 
@@ -9,6 +9,7 @@ DBTuna visualizes PostgreSQL and SQL Server plans inside VS Code. This documenta
 | [Getting started](getting-started.md) | Installation, connections, selection, actual runs and available commands |
 | [PostgreSQL](postgres-support.md) | Supported SQL, plan collection and runtime metric semantics |
 | [SQL Server](sqlserver-support.md) | Authentication, GO batches, Showplan import and actual execution limits |
+| [Oracle Database](oracle-support.md) | Service/PDB connections, estimated/actual plans, Oracle SQL boundaries and permissions |
 | [AI assistance](ai-assistance.md) | API-key/model setup, submitted data, scoring and suggestions |
 | [Troubleshooting](troubleshooting.md) | Missing options, disabled execution and common errors |
 | [Security](security.md) | Credentials, trust, execution, imports and external requests |

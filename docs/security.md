@@ -16,13 +16,15 @@ Explain Query does not collect an actual plan. PostgreSQL uses read-only transac
 
 Planning is not an unconditional sandbox. PostgreSQL and database compilation can evaluate functions or perform other planning-related work. Estimated INSERTs do not intentionally execute writes, and integration tests verify unchanged target rows, but SQL classification is not a substitute for database permissions.
 
+Oracle estimates write diagnostic PLAN_TABLE rows on a dedicated connection and roll them back; submitted business SQL is not executed. See [Oracle support](oracle-support.md) for permissions.
+
 ## Confirmed execution
 
-Actual execution is an explicit, separate action. The host registers live estimates with their original profile snapshot and required setup context. It checks workspace trust, current plan identity and unchanged connection configuration before and after confirmation. Both SELECT and INSERT show the target and exact SQL in a modal dialog.
+Actual execution is an explicit, separate action. The host registers live estimates with their original profile snapshot and required setup context. It checks workspace trust, current plan identity and unchanged connection configuration before and after confirmation. SELECT and INSERT use the inline two-click Run/Are you sure? pattern; cancellation also requires two clicks. The original SQL remains in the query preview.
 
 Requests carry IDs only. Imported data, persisted executionAvailable flags and webview-supplied identifiers cannot create a live binding. Original batch setup is host-only; SQL Server may reuse only required leading literal DECLARE statements, never earlier queries. Only one run can be pending or active, duplicate requests are blocked and no automatic retries occur.
 
-PostgreSQL actual collection uses EXPLAIN ANALYZE with buffers and commits on success. SQL Server uses STATISTICS XML and autocommit. Normal result rowsets are discarded. Both paths use approximately 30-second statement/request limits; PostgreSQL also limits lock waits to 5 seconds.
+PostgreSQL actual collection uses EXPLAIN ANALYZE with buffers and commits on success. SQL Server uses STATISTICS XML and autocommit. Oracle instruments a dedicated session, fully fetches SELECT results and identifies a uniquely tagged cursor. INSERT commits after runtime-plan validation; cancellation/commit errors preserve uncertainty. Normal result rowsets are discarded. All three engines use approximately 30-second execution limits; PostgreSQL also limits lock waits to 5 seconds.
 
 **INSERT changes persist. SELECT functions execute.** Driver failures, disconnections, cancellation and plan-processing errors can occur after changes commit. Error messages preserve that uncertainty. Cancellation cannot guarantee rollback or undo external effects. Inspect the database before retrying a write.
 

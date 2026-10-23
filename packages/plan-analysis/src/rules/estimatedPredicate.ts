@@ -5,10 +5,10 @@ function hasColumnExpression(predicate: string): boolean {
   // not become column-access advice. This is deliberately a narrow heuristic.
   const masked = predicate
     .replace(/(?:\b[NE])?'(?:''|[^'])*'/gi, " ")
-    .replace(/@[\w]+/g, " ")
+    .replace(/[@:][\w]+/g, " ")
     .replace(/\[(?:[^\]]|\]\])*\]|"(?:[^"]|"")*"/g, "column_ref");
   for (const match of masked.matchAll(
-    /\b(lower|upper|coalesce|isnull|convert|cast|datepart|year)\s*\(/gi,
+    /\b(lower|upper|coalesce|isnull|convert|cast|datepart|year|nvl|to_char|to_date|trunc)\s*\(/gi,
   )) {
     const start = match.index! + match[0].length;
     let end = start,

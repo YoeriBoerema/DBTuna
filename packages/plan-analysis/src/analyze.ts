@@ -59,7 +59,7 @@ export function analyzePlan(
     skippedNodes: 0,
     reasons: [] as string[],
   }));
-  if (!["postgresql", "sqlserver"].includes(plan.database.engine))
+  if (!["postgresql", "sqlserver", "oracle"].includes(plan.database.engine))
     return {
       findings,
       ruleCoverage,

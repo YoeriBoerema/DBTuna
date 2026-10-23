@@ -24,7 +24,17 @@ export function advicePayload({ plan, nodeId, context, query }: AiInput) {
     plan: {
       schemaVersion: plan.schemaVersion,
       rootNodeIds: plan.rootNodeIds,
-      nodes: plan.nodes,
+      nodes:
+        plan.database.engine === "oracle"
+          ? plan.nodes.map((node) => ({
+              ...node,
+              properties: Object.fromEntries(
+                Object.entries(node.properties).filter(
+                  ([key]) => key !== "OTHER_XML",
+                ),
+              ),
+            }))
+          : plan.nodes,
       edges: plan.edges,
       application: {
         statementType: plan.application.statementType,

@@ -9,6 +9,9 @@ await build({
   external: ["vscode"],
   sourcemap: true,
 });
+await mkdir("dist/licenses/oracledb", { recursive: true });
+for (const name of ["LICENSE.txt", "NOTICE.txt", "THIRD_PARTY_LICENSES.txt"])
+  await cp(`node_modules/oracledb/${name}`, `dist/licenses/oracledb/${name}`);
 await build({
   entryPoints: ["webview/src/App.tsx"],
   outfile: "dist/webview.js",

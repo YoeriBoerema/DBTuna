@@ -2,23 +2,23 @@
 
 [Documentation](README.md) · [Development](development.md)
 
-Source version: see [generated build information](build-info.md). Verification recorded **23 October 2026** for the v0.6.14 refactor release. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
+Verification recorded **23 October 2026** for **0.7.0 - The Oracle Has Arrived!** Source version: [build information](build-info.md). Results describe this development environment, not a guarantee across every database/version.
 
-## Current checks
+## Release checks
 
 | Check | Result and scope |
 | --- | --- |
-| Unit tests | 90 passed: native fixtures, validation, graph/batch invariants, connectors, execution binding, profile storage, AI transport and asynchronous state |
-| Formatting, TypeScript and ESLint | Passed, including packaging scripts, browser helpers and generated build-information checks |
-| Host and webview bundles | Built successfully |
-| Browser suites | All seven suites passed in headless Edge: layout, navigation, 500 ms tooltips, view switching, query sections, actual controls, local analysis/navigation, resizing and AI presentation |
-| PostgreSQL integration | Passed on disposable PostgreSQL 18.4: estimates, joins, six INSERT forms, unchanged estimate row counts, actual SELECT, committed actual INSERT, rollback and cancellation |
-| VS Code activation | Passed on isolated VS Code 1.96.4: activation, command registration, sample panel and SQL editor |
-| VSIX packaging | Version-derived package built and verified: archived manifest and runtime hashes match this checkout; packaging does not install or publish it |
-| Live SQL Server | Not run; fixtures, protocol, normalization and browser checks passed |
-| Live OpenAI requests | Not run; mock transport and UI checks passed |
+| Unit tests | 116 passed, including Oracle lexical boundaries, adapters, analysis, collector protocol, commit/rollback, cancellation, LOB cleanup and bundled Thin driver transport |
+| Formatting, TypeScript and ESLint | Passed |
+| Host and webview | Built successfully; Oracle driver and notices are bundled |
+| Browser suites | All nine passed in isolated headless Edge, including Oracle query sections, inline execution confirmation, actual/estimated switching and finding navigation |
+| PostgreSQL integration | Passed on disposable PostgreSQL 18.4, including unchanged estimate row counts, SELECT/INSERT actual plans, committed INSERT, rollback and cancellation |
+| VS Code activation | Passed in isolated VS Code 1.96.4; commands, sample panel and SQL editor |
+| VSIX | Manifest, archived runtime hashes and Oracle license/notice entries verified before upload |
+| Live Oracle | Not run: no working Docker engine/disposable Oracle server was available; the opt-in harness was checked and skipped by its guard |
+| Live SQL Server / OpenAI | Not run; existing fixtures/protocol and mock transport coverage remain |
 
-Additional regressions cover deep Showplan trees, numeric XML line endings, escaped entity-looking SQL, single-pass XML parsing, whole-document operator budgets, per-statement batches, host-only declaration context, invalid-profile persistence, one-time migration, stale replies and operation-specific timeouts.
+Oracle fixture and protocol tests are not evidence of successful execution against a real Oracle server. Oracle 19c/Free compatibility, real grants, TCPS, RAC/PDB edge cases and runtime cursor behavior require live verification. See [Oracle setup and opt-in integration](oracle-support.md).
 
 ## Reproduce
 
@@ -60,7 +60,3 @@ This opt-in test creates/drops a uniquely named table and verifies estimated and
 Older checkpoints are in the [verification history](archive/verification-history.md). They preserve historical counts and behavior and should not be used as current instructions.
 
 Refactor regressions also cover snapshot identity across serialization and execution-availability changes, explicit confirmation/display transitions, connector classification, all conversion warnings with provenance, per-rule applicability reasons and version-derived artifact naming. Tests are grouped by behavior and share native fixture builders. The PostgreSQL integration expectation for an unsupported DELETE was refreshed from Failed to Skipped to match the existing tolerant Explain behavior.
-
-## Estimated-analysis working tree
-
-After v0.6.14, the estimated-analysis additions passed 95 unit tests, formatting, TypeScript, ESLint, build and all eight browser suites. New tests use plans without actual counters for both PostgreSQL and SQL Server, checking estimated-risk labels, operator navigation, conservative loop inference, missing-index statement scope and constant-only predicate exclusions. Live database collection was unchanged; PostgreSQL integration and VS Code activation above refer to the refactor verification. These additions are not yet installed or released.

@@ -3,6 +3,8 @@ import type { QueryPlanAdapter } from "./adapter";
 export class AdapterRegistry {
   constructor(private adapters: QueryPlanAdapter[]) {}
   parseStatements(value: unknown) {
+    if (typeof value === "string" && /^[{[]/.test(value.trimStart()))
+      value = bounded(value);
     const adapter = this.adapters.find((candidate) =>
       candidate.canParse(value),
     );
@@ -12,7 +14,10 @@ export class AdapterRegistry {
   }
   parse(value: unknown) {
     const input =
-      typeof value === "string" && value.trimStart().startsWith("<")
+      typeof value === "string" &&
+      !/^[{[]/.test(value.trimStart()) &&
+      (value.trimStart().startsWith("<") ||
+        this.adapters.some((adapter) => adapter.canParse(value)))
         ? value
         : bounded(value);
     if (input && typeof input === "object" && "schemaVersion" in input)
@@ -20,7 +25,7 @@ export class AdapterRegistry {
     const adapter = this.adapters.find((a) => a.canParse(input));
     if (!adapter)
       throw Error(
-        "Expected PostgreSQL JSON, SQL Server Showplan XML, or DBTuna 1.0 JSON.",
+        "Expected PostgreSQL JSON, SQL Server Showplan XML, Oracle native JSON/DBMS_XPLAN text, or DBTuna 1.0 JSON.",
       );
     return adapter.parse(input);
   }

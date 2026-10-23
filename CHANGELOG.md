@@ -2,8 +2,13 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
-## Unreleased
+## 0.7.0 - The Oracle Has Arrived!
 
+- Add Oracle Thin service/PDB connections, optional schema and verified TCPS. Existing profiles are preserved.
+- Add Oracle-aware batches, safe setup/PLSQL skipping, structured estimated plans and exact-cursor actual SELECT/INSERT collection.
+- Reuse inline run/cancel confirmation, graph navigation, resizable panels, operator findings and AI assistance for Oracle.
+- Add Oracle local evidence extraction, native JSON/DBMS_XPLAN imports, fixtures, collector tests and an opt-in isolated live integration suite.
+- Document Oracle permissions, metric differences and unsupported SQL/connection forms. Live Oracle integration remains unverified in this environment.
 - Add clearly labeled estimated-plan analysis for PostgreSQL and SQL Server: large intermediate results, join expansion, sort/hash workload, repeated access and predicate-expression candidates.
 - Surface SQL Server native missing-index candidates for workload review without generating or executing DDL.
 

@@ -29,7 +29,7 @@ export class PlanFiles {
   async importPlan() {
     const { registry, panels, cancel } = this;
     const uris = await vscode.window.showOpenDialog({
-      filters: { "Execution plan": ["json", "sqlplan", "xml"] },
+      filters: { "Execution plan": ["json", "sqlplan", "xml", "txt", "plan"] },
       canSelectMany: false,
     });
     if (!uris) return;
@@ -37,7 +37,12 @@ export class PlanFiles {
     if (stat.size > PLAN_LIMITS.bytes) throw Error("Import exceeds 5 MiB.");
     const bytes = await vscode.workspace.fs.readFile(uris[0]);
     const text = decodePlan(bytes);
-    const value = text.trimStart().startsWith("<") ? text : bounded(text);
+    const value =
+      !/^[{[]/.test(text.trimStart()) &&
+      (text.trimStart().startsWith("<") ||
+        /\|\s*Id\s*\|\s*Operation\s*\|/i.test(text))
+        ? text
+        : bounded(text);
     const offline = (
       plan: import("../../../packages/plan-core/src/types").QueryPlan,
     ) => {

@@ -9,7 +9,7 @@ export async function loadAdapter(name) {
   const outfile = resolve(`work/browser-${name}-adapter.cjs`);
   await build({
     entryPoints: [
-      `packages/adapter-${name}/src/${name === "postgres" ? "postgres" : "sqlServer"}Adapter.ts`,
+      `packages/adapter-${name}/src/${name === "postgres" ? "postgres" : name === "oracle" ? "oracle" : "sqlServer"}Adapter.ts`,
     ],
     outfile,
     bundle: true,
