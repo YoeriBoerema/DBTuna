@@ -57,7 +57,12 @@ export function RuleFindings({
         >
           <h4>{finding.title}</h4>
           <small>
-            {finding.severity} · {finding.confidence} confidence · operator{" "}
+            {finding.basis === "estimated"
+              ? "Estimated risk"
+              : finding.basis === "native"
+                ? "Native plan evidence"
+                : "Measured evidence"}{" "}
+            · {finding.severity} · {finding.confidence} confidence · operator{" "}
             {finding.nodeIds.join(", ")}
           </small>
           <dl>

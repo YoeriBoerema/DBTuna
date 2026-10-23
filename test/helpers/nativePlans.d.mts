@@ -8,4 +8,5 @@ export function sqlServerNative(options?: {
   warnings?: string;
   statementWarnings?: string;
   body?: string;
+  attributes?: string;
 }): string;

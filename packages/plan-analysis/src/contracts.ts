@@ -3,6 +3,7 @@ import type { NodeFacts, FactCapability } from "./factTypes";
 export type Finding = {
   ruleId: string;
   ruleVersion: 1;
+  basis: "estimated" | "measured" | "native";
   nodeIds: string[];
   severity: "warning" | "info";
   confidence: "high" | "medium" | "low";
@@ -18,6 +19,9 @@ export const defaultThresholds = {
   repeatedRows: 100000,
   examinedRows: 10000,
   rejectedFraction: 0.9,
+  estimatedRows: 100000,
+  joinExpansionRatio: 10,
+  estimatedWorkRows: 100000,
 };
 export type Analysis = {
   findings: Finding[];
@@ -34,16 +38,18 @@ export type RuleCoverage = {
 };
 export type FindingDetails = Omit<
   Finding,
-  "ruleId" | "ruleVersion" | "nodeIds"
+  "ruleId" | "ruleVersion" | "nodeIds" | "basis"
 >;
 export type RuleContext = {
   node: PlanNode;
   facts: NodeFacts;
   thresholds: Thresholds;
   partiallyConsumed: boolean;
+  inputs: PlanNode[];
 };
 export type AnalysisRule = {
   id: string;
+  basis?: Finding["basis"];
   requires: FactCapability[];
   inapplicable?: (context: RuleContext) => string | undefined;
   evaluate: (context: RuleContext) => FindingDetails | undefined;

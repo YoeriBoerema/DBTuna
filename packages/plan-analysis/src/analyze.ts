@@ -1,5 +1,6 @@
 import type { QueryPlan } from "../../plan-core/src/types";
 import { extractFacts } from "./facts";
+import { estimatedInputs } from "./estimatedContext";
 import { partialConsumption } from "./graphContext";
 import {
   defaultThresholds,
@@ -18,6 +19,12 @@ import { predicateRule } from "./rules/predicate";
 import { nativeWarningsRule } from "./rules/nativeWarnings";
 import { predicateExpressionRule } from "./rules/predicateExpression";
 
+import { estimatedResultRule } from "./rules/estimatedResult";
+import { estimatedMemoryRule } from "./rules/estimatedMemory";
+import { estimatedRepeatedRule } from "./rules/estimatedRepeated";
+import { estimatedPredicateRule } from "./rules/estimatedPredicate";
+import { estimatedIndexesRule } from "./rules/estimatedIndexes";
+
 export const analysisRules: readonly AnalysisRule[] = [
   cardinalityRule,
   spillRule,
@@ -26,6 +33,11 @@ export const analysisRules: readonly AnalysisRule[] = [
   predicateRule,
   nativeWarningsRule,
   predicateExpressionRule,
+  estimatedResultRule,
+  estimatedMemoryRule,
+  estimatedRepeatedRule,
+  estimatedPredicateRule,
+  estimatedIndexesRule,
 ];
 export function analyzePlan(
   plan: QueryPlan,
@@ -60,13 +72,18 @@ export function analyzePlan(
   if (plan.source.synthetic)
     coverage.push("This is a synthetic sample; findings describe sample data.");
   const partial = partialConsumption(plan);
+  const nodeFacts = new Map(
+    plan.nodes.map((node) => [node.id, extractFacts(plan, node)]),
+  );
+  const inputs = estimatedInputs(plan, nodeFacts);
   for (const node of plan.nodes) {
-    const facts = extractFacts(plan, node);
+    const facts = nodeFacts.get(node.id)!;
     const context: RuleContext = {
       node,
       facts,
       thresholds,
       partiallyConsumed: partial.has(node.id),
+      inputs: inputs.get(node.id) || [],
     };
     analysisRules.forEach((rule, index) => {
       const report = ruleCoverage[index];
@@ -91,12 +108,13 @@ export function analyzePlan(
           ...result,
           ruleId: rule.id,
           ruleVersion: 1,
+          basis: rule.basis || "measured",
           nodeIds: [node.id],
         });
     });
   }
   coverage.push(
-    "Spill, filtering and predicate checks only run when native evidence is present. No findings does not mean the query is optimal.",
+    "Estimated risks describe optimizer predictions and textual candidates, not measured bottlenecks. Runtime checks still require actual counters. No findings does not mean the query is optimal.",
   );
   const rank = { warning: 0, info: 1 };
   findings.sort(

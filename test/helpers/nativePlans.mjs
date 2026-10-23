@@ -18,10 +18,11 @@ export function sqlServerNative({
   warnings = "",
   statementWarnings = "",
   body = "",
+  attributes = "",
 } = {}) {
   return `<ShowPlanXML><BatchSequence><Batch><Statements>
     <StmtSimple StatementText="SELECT * FROM t" StatementType="SELECT"><QueryPlan>${statementWarnings}
-    <RelOp PhysicalOp="${operator}" EstimateRows="${estimate}">
+    <RelOp PhysicalOp="${operator}" EstimateRows="${estimate}" ${attributes}>
     ${counters ? `<RunTimeInformation>${counters}</RunTimeInformation>` : ""}${warnings}${body}
     </RelOp></QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>`;
 }

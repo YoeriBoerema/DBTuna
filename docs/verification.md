@@ -60,3 +60,7 @@ This opt-in test creates/drops a uniquely named table and verifies estimated and
 Older checkpoints are in the [verification history](archive/verification-history.md). They preserve historical counts and behavior and should not be used as current instructions.
 
 Refactor regressions also cover snapshot identity across serialization and execution-availability changes, explicit confirmation/display transitions, connector classification, all conversion warnings with provenance, per-rule applicability reasons and version-derived artifact naming. Tests are grouped by behavior and share native fixture builders. The PostgreSQL integration expectation for an unsupported DELETE was refreshed from Failed to Skipped to match the existing tolerant Explain behavior.
+
+## Estimated-analysis working tree
+
+After v0.6.14, the estimated-analysis additions passed 95 unit tests, formatting, TypeScript, ESLint, build and all eight browser suites. New tests use plans without actual counters for both PostgreSQL and SQL Server, checking estimated-risk labels, operator navigation, conservative loop inference, missing-index statement scope and constant-only predicate exclusions. Live database collection was unchanged; PostgreSQL integration and VS Code activation above refer to the refactor verification. These additions are not yet installed or released.

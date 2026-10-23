@@ -1,6 +1,7 @@
 import type { AnalysisRule } from "../contracts";
 export const nativeWarningsRule: AnalysisRule = {
   id: "native.warning",
+  basis: "native",
   requires: ["warnings"],
   evaluate: ({ facts: f }) => {
     if (f.warnings.length)

@@ -5,6 +5,13 @@ export function postgresFacts(node: PlanNode) {
   const facts = counterFacts(node);
   const actual = node.actuals;
   const p = node.properties;
+  if (["Sort", "Incremental Sort"].includes(node.nativeType))
+    facts.memoryOperation = "sort";
+  else if (
+    node.nativeType === "Hash" ||
+    ["Hashed", "Mixed"].includes(String(p.Strategy))
+  )
+    facts.memoryOperation = "hash";
 
   if (p["Sort Space Type"] === "Disk")
     facts.spillEvidence["Sort space type"] = "Disk";

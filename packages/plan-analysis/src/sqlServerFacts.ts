@@ -1,9 +1,23 @@
 import type { PlanNode, QueryPlan } from "../../plan-core/src/types";
+import { extractMissingIndexes } from "./sqlServerIndexes";
 import { counterFacts, finishFacts } from "./factTypes";
 import { object, number, entries, type ObjectValue } from "./native";
 export function sqlServerFacts(plan: QueryPlan, node: PlanNode) {
   const facts = counterFacts(node);
   const p = node.properties;
+  if (/Sort/i.test(node.nativeType)) facts.memoryOperation = "sort";
+  else if (/Hash Match/i.test(node.nativeType)) facts.memoryOperation = "hash";
+  const rebinds = number(p.EstimateRebinds),
+    rewinds = number(p.EstimateRewinds);
+  if (rebinds !== undefined && rewinds !== undefined) {
+    facts.estimatedExecutions = 1 + rebinds + rewinds;
+    facts.estimatedExecutionSource =
+      "SQL Server estimated rebinds + rewinds + 1";
+  }
+  if (plan.rootNodeIds[0] === node.id) {
+    facts.missingIndexes = extractMissingIndexes(plan.metadata);
+    facts.availability.missingIndexes = { available: true };
+  }
 
   const native = entries(p);
 

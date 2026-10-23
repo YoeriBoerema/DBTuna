@@ -1,6 +1,7 @@
 import type { AnalysisRule } from "../contracts";
 export const predicateRule: AnalysisRule = {
   id: "predicate.plan-affecting-conversion",
+  basis: "native",
   requires: ["predicate"],
   evaluate: ({ facts: f }) => {
     if (f.conversions.length)

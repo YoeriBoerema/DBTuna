@@ -1,8 +1,26 @@
 import type { PlanNode } from "../../plan-core/src/types";
 export type FactCapability =
-  "cardinality" | "spill" | "repeated" | "filtering" | "predicate" | "warnings";
+  | "cardinality"
+  | "spill"
+  | "repeated"
+  | "filtering"
+  | "predicate"
+  | "warnings"
+  | "estimates"
+  | "estimatedExecutions"
+  | "missingIndexes";
 export type Availability = { available: boolean; reason?: string };
 export type NodeFacts = {
+  estimatedExecutions?: number;
+  estimatedExecutionSource?: string;
+  memoryOperation?: "sort" | "hash";
+  missingIndexes: {
+    relation: string;
+    equality: string[];
+    inequality: string[];
+    include: string[];
+    impact?: number;
+  }[];
   rowsPerExecution?: number;
   totalRows?: number;
   executions?: number;
@@ -16,6 +34,7 @@ export type NodeFacts = {
 };
 export function counterFacts(node: PlanNode): NodeFacts {
   const facts: NodeFacts = {
+    missingIndexes: [],
     spillEvidence: {},
     warnings: [],
     conversions: [],
@@ -27,6 +46,9 @@ export function counterFacts(node: PlanNode): NodeFacts {
         "filtering",
         "predicate",
         "warnings",
+        "estimates",
+        "estimatedExecutions",
+        "missingIndexes",
       ].map((key) => [
         key,
         { available: false, reason: "Native evidence is unavailable." },
@@ -48,6 +70,7 @@ export function counterFacts(node: PlanNode): NodeFacts {
 }
 export function finishFacts(facts: NodeFacts, node: PlanNode): NodeFacts {
   for (const key of [
+    "estimatedExecutions",
     "rowsPerExecution",
     "totalRows",
     "executions",
@@ -56,6 +79,14 @@ export function finishFacts(facts: NodeFacts, node: PlanNode): NodeFacts {
   ] as const)
     if (facts[key] !== undefined && !Number.isFinite(facts[key]))
       delete facts[key];
+  facts.availability.estimates = {
+    available: node.estimates?.rows !== undefined,
+    reason: "Operator row estimates are unavailable.",
+  };
+  facts.availability.estimatedExecutions = {
+    available: facts.estimatedExecutions !== undefined,
+    reason: "Comparable estimated execution counts are unavailable.",
+  };
   facts.availability.cardinality = {
     available:
       facts.rowsPerExecution !== undefined &&

@@ -2,6 +2,11 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## Unreleased
+
+- Add clearly labeled estimated-plan analysis for PostgreSQL and SQL Server: large intermediate results, join expansion, sort/hash workload, repeated access and predicate-expression candidates.
+- Surface SQL Server native missing-index candidates for workload review without generating or executing DDL.
+
 ## 0.6.14
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.14)
