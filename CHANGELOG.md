@@ -2,6 +2,13 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.13
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.13)
+
+- Resize visualization boxes vertically by dragging the bottom-right corner.
+- Support single plans and independent query boxes in batches, with a minimum height and visible navigation footer.
+
 ## 0.6.12
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.12)

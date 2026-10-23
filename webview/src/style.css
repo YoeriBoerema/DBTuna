@@ -127,6 +127,12 @@ h1 span {
   flex: 1;
   min-height: 0;
   display: flex;
+  overflow: auto;
+  align-items: flex-start;
+}
+.single-plan > .executable-plan {
+  width: 100%;
+  flex-shrink: 0;
 }
 .plan-workspace {
   height: 100%;
@@ -215,6 +221,13 @@ h1 span {
 }
 .lazy-plan {
   height: 460px;
+}
+.lazy-plan,
+.single-plan > .executable-plan {
+  resize: vertical;
+  overflow: hidden;
+  min-height: 280px;
+  padding-bottom: 12px;
 }
 .plan-placeholder,
 .query-pending,

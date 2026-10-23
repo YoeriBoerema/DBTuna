@@ -34,7 +34,7 @@ npm run build
 npm run package
 ```
 
-The current package command writes `../dbtuna-0.6.12.vsix`. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
+The current package command writes `../dbtuna-0.6.13.vsix`. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
 
 ## Verify
 

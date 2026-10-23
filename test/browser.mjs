@@ -10,6 +10,7 @@ for (const file of [
   "render-execution.mjs",
   "render-sqlserver.mjs",
   "render-analysis.mjs",
+  "render-resize.mjs",
   "render-doom.mjs",
 ])
   runNode([`test/${file}`], environment);
