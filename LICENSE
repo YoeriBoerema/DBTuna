@@ -1,9 +1,81 @@
-MIT License
+DBTuna Non-Commercial, No-Resale License
+Version 1.0
 
-Copyright (c) 2026 DBTuna contributors
+Copyright (c) 2026 DBTuna contributors. All rights reserved except as expressly
+granted below.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+1. Scope
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+"Software" means the original DBTuna source code, binaries, documentation and
+other original project materials distributed with this license, including
+modifications and substantial portions of those materials. "Licensors" means
+the applicable copyright holders offering those materials under this license.
+Separately licensed third-party materials are excluded as described in section 6.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+2. Non-commercial permission
+
+Subject to every condition of this license, the Licensors grant you a worldwide,
+non-exclusive, royalty-free permission to use, reproduce, study, modify and
+distribute the Software solely for non-commercial purposes. Examples include
+personal learning, hobby projects and research or education that does not support
+a commercial activity.
+
+3. Commercial use is prohibited
+
+You may not use, reproduce, modify, distribute or otherwise exploit the Software
+for a commercial purpose. Commercial purposes include use in support of a
+commercial business, internal commercial business operations, paid client or
+consulting work, commercial research and development, and products or services
+offered for commercial advantage or monetary compensation. Providing the
+Software to end users free of charge does not make an otherwise commercial use
+permitted. These restrictions apply to original and modified versions and to
+substantial portions incorporated into another work.
+
+4. Sale and resale are prohibited
+
+You may not sell, resell, rent, lease or license the Software for a fee; charge
+for copies, distribution or access to it; bundle it into a paid product or
+service; or provide paid hosted access to it. These prohibitions also apply to
+modified versions and substantial portions of the Software. This license grants
+no right to sublicense the Software under terms that permit commercial use or
+resale. Any commercial use or resale requires a separate written license from
+the applicable copyright holders; it is not authorized by this license.
+
+5. Conditions for permitted sharing
+
+Every permitted distribution of the Software, a modified version or a
+substantial portion must be free of charge and include this complete license
+and all applicable copyright and attribution notices. Clearly identify your
+modifications. Do not remove these restrictions, offer recipients broader
+rights to the Software, or imply endorsement by the Licensors. Recipients
+receive permission directly under this license, subject to its conditions.
+
+6. Third-party materials and existing rights
+
+Dependencies, separately distributed components and other materials carrying
+their own licenses remain governed by those licenses. This license does not
+replace those terms, impose additional restrictions on those third-party
+materials, or remove rights their copyright holders grant. Preserve their
+required notices and comply with their terms.
+
+This license does not withdraw permissions already granted for copies obtained
+under a previous license. DBTuna versions released under the MIT License,
+including releases through v0.7.1, remain available under the terms applicable
+to those copies. This license does not limit rights available independently
+under applicable law.
+
+7. Reservation of rights and termination
+
+All rights not expressly granted are reserved. No trademark rights are granted.
+The permissions granted by this license terminate automatically if you violate
+its conditions. Following termination, you must stop activities that relied on
+those permissions unless the applicable copyright holders reinstate them in
+writing. This does not terminate independent rights described in section 6.
+
+8. No warranty or liability
+
+To the extent permitted by applicable law, the Software is provided "AS IS",
+without warranties of any kind, including merchantability, fitness for a
+particular purpose and non-infringement. The Licensors are not liable for any
+claim, loss or damage arising from the Software or its use, whether in contract,
+tort or otherwise.

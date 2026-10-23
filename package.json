@@ -4,7 +4,7 @@
   "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
   "version": "0.7.1",
   "publisher": "dbtuna-local",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.96.0"
   },

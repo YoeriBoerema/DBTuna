@@ -4,7 +4,7 @@ License: GNU GPL version 2; see COPYING.
 Runtime build: https://github.com/Saketh-Chandra/doom-wasm-pwa/tree/5b1e1fe7385b6f0b19d60dece6adbf88f6842e20
 Complete corresponding source: engine-source.zip
 Source revision: https://github.com/Saketh-Chandra/doom-wasm-pwa/tree/a77edfd8bbc7e66b119a49c954f69a8b24e59206
-Source archive includes the upstream build scripts and notices. The engine is distributed separately from DBTuna's MIT-licensed application code.
+Source archive includes the upstream build scripts and notices. The engine is distributed separately from DBTuna's application code and remains under its own GPL license; DBTuna's application license does not restrict this component.
 
 Freedoom: Phase 1 v0.13.0 (unmodified game data)
 Copyright Freedoom contributors. License: BSD 3-clause; see FREEDOOM-COPYING.

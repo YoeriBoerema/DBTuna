@@ -71,4 +71,8 @@ npm run package
 
 Development requires Node.js 22 or later. `npm run verify` runs type checks, lint, unit tests, both builds and all browser suites. Additional integration checks, screenshot generation and packaging instructions are in the [development guide](docs/development.md).
 
-Licensed under [MIT](LICENSE).
+## License
+
+DBTuna's original project code and materials on the current branch use the [DBTuna Non-Commercial, No-Resale License](LICENSE). Non-commercial use, modification and free sharing are permitted. Commercial use, including internal commercial business use, and sale or resale are prohibited without a separate written license from the copyright holders. These restrictions also cover modified versions and substantial portions incorporated into other products.
+
+Third-party components retain their own licenses. Previously released MIT versions, including v0.7.1 and earlier, retain their original permissions; this change does not retroactively restrict those copies. This is a source-available license with commercial restrictions, not an open-source license.

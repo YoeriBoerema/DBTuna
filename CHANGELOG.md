@@ -2,6 +2,10 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## Unreleased
+
+- License original DBTuna materials on the current branch for non-commercial use and free sharing only; explicitly prohibit commercial use and resale. Existing MIT releases through v0.7.1 and independently licensed third-party components retain their original terms.
+
 ## 0.7.1
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.1)
