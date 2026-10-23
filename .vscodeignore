@@ -15,3 +15,5 @@ pnpm-workspace.yaml
 .gitignore
 
 vendor/**
+
+scripts/**

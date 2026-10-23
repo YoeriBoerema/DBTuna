@@ -1,3 +1,4 @@
+import { postgresNative } from "../helpers/nativePlans.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -10,7 +11,7 @@ import type {
   ExecutionResult,
   AiResult,
 } from "../../src/extension/webview/messages";
-const plan = new PostgresAdapter().parse([{ Plan: { "Node Type": "Result" } }]);
+const plan = new PostgresAdapter().parse(postgresNative());
 const result = (requestId: string): ExecutionResult => ({
   type: "EXECUTION_RESULT",
   requestId,
@@ -129,5 +130,34 @@ test("AI transitions do not let stale success overwrite a newer request or cance
       message: { ...success, requestId: "new" },
     }),
     cancelled,
+  );
+});
+
+test("execution confirmation and display state only transition through valid phases", () => {
+  let state = executionReducer(initialExecutionState, { type: "arm_cancel" });
+  assert.equal(state.confirmation, "none");
+  state = executionReducer(state, { type: "arm_run" });
+  assert.equal(state.confirmation, "run");
+  state = executionReducer(state, { type: "start", requestId: "one" });
+  assert.equal(state.status, "preparing");
+  assert.equal(state.confirmation, "none");
+  assert.equal(
+    executionReducer(state, { type: "start", requestId: "duplicate" }),
+    state,
+  );
+  state = executionReducer(state, { type: "arm_cancel" });
+  assert.equal(state.confirmation, "cancel");
+  state = executionReducer(state, {
+    type: "result",
+    message: result("one"),
+    now: 1,
+  });
+  assert.equal(state.confirmation, "none");
+  assert.equal(state.mode, "actual");
+  state = executionReducer(state, { type: "select_mode", mode: "estimated" });
+  assert.equal(state.mode, "estimated");
+  assert.deepEqual(
+    executionReducer(state, { type: "reset" }),
+    initialExecutionState,
   );
 });

@@ -3,7 +3,9 @@ import type { QueryPlanAdapter } from "./adapter";
 export class AdapterRegistry {
   constructor(private adapters: QueryPlanAdapter[]) {}
   parseStatements(value: unknown) {
-    const adapter = this.adapters.find((candidate) => candidate.canParse(value));
+    const adapter = this.adapters.find((candidate) =>
+      candidate.canParse(value),
+    );
     return adapter?.parseStatements
       ? adapter.parseStatements(value)
       : [this.parse(value)];

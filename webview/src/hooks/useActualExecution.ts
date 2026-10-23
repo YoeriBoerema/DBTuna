@@ -2,7 +2,7 @@ import {
   executionReducer,
   initialExecutionState,
 } from "../state/executionState";
-import { useEffect, useState, useRef, useReducer } from "react";
+import { useEffect, useRef, useReducer } from "react";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import type { ExtensionToWebview } from "../../../src/extension/webview/messages";
 import { api } from "../vscodeApi";
@@ -10,13 +10,18 @@ export function useActualExecution(plan: QueryPlan) {
   const [state, dispatch] = useReducer(executionReducer, initialExecutionState);
   const { actual, status, elapsed } = state;
   const error = "error" in state ? state.error : "";
-  const [mode, setMode] = useState<"estimated" | "actual">("estimated");
-  const [armed, setArmed] = useState(false);
-  const [cancelArmed, setCancelArmed] = useState(false);
+  const { mode, confirmation } = state;
+  const armed = confirmation === "run";
+  const cancelArmed = confirmation === "cancel";
+  const setMode = (mode: "estimated" | "actual") =>
+    dispatch({ type: "select_mode", mode });
   const active = useRef<string | undefined>(undefined);
-  const pending = status === "confirming" || status === "running";
-  useEffect(() => setArmed(false), [plan]);
+  const pending = status === "preparing" || status === "running";
   useEffect(() => {
+    dispatch({ type: "disarm" });
+  }, [plan]);
+  useEffect(() => {
+    dispatch({ type: "reset" });
     const listener = (event: MessageEvent<ExtensionToWebview>) => {
       const message = event.data;
       if (
@@ -28,15 +33,14 @@ export function useActualExecution(plan: QueryPlan) {
       dispatch({ type: "result", message, now: Date.now() });
       if (message.status !== "running") {
         active.current = undefined;
-        setCancelArmed(false);
       }
-      if (message.status === "complete") setMode("actual");
     };
     window.addEventListener("message", listener);
     return () => {
       window.removeEventListener("message", listener);
       if (active.current)
         api.postMessage({ type: "CANCEL_ACTUAL", requestId: active.current });
+      active.current = undefined;
     };
   }, [plan.id]);
   useEffect(() => {
@@ -50,24 +54,21 @@ export function useActualExecution(plan: QueryPlan) {
   const run = () => {
     if (active.current || plan.application.executionAvailable !== true) return;
     if (!armed) {
-      setArmed(true);
+      dispatch({ type: "arm_run" });
       return;
     }
-    setArmed(false);
-    setCancelArmed(false);
     const requestId = crypto.randomUUID();
     active.current = requestId;
     dispatch({ type: "start", requestId });
-    setMode("estimated");
     api.postMessage({ type: "RUN_ACTUAL", planId: plan.id, requestId });
   };
   const cancel = () => {
     if (!active.current) return;
     if (!cancelArmed) {
-      setCancelArmed(true);
+      dispatch({ type: "arm_cancel" });
       return;
     }
-    setCancelArmed(false);
+    dispatch({ type: "disarm" });
     api.postMessage({ type: "CANCEL_ACTUAL", requestId: active.current });
   };
   return {

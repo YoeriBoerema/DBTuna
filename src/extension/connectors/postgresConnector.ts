@@ -4,6 +4,7 @@ import {
   collectPlan,
   collectActualPlan,
 } from "../connection/postgresClient";
+import { preparePostgresExplain } from "../sql/postgresExplain";
 import { splitSqlBatch } from "../sql/batchSelection";
 import { validateSql } from "../sql/statementSelection";
 import { preparePostgresExecution } from "../sql/executionPreparation";
@@ -12,6 +13,7 @@ const adapter = new PostgresAdapter();
 export const postgresConnector: DatabaseConnector = {
   type: "postgresql",
   split: splitSqlBatch,
+  classify: (sql) => [preparePostgresExplain(sql)],
   validate: validateSql,
   collectEstimated: (profile, password, sql, signal) =>
     collectPlan(clientConfig(profile, password), sql, signal),

@@ -1,4 +1,7 @@
-import { PLAN_LIMITS, SQL_LIMITS } from "../../../packages/plan-core/src/limits";
+import {
+  PLAN_LIMITS,
+  SQL_LIMITS,
+} from "../../../packages/plan-core/src/limits";
 // Mask literals, identifiers and nested comments before inspecting control tokens.
 export function maskTsql(sql: string): string {
   let result = "",

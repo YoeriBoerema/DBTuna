@@ -81,6 +81,9 @@ importers:
       typescript-eslint:
         specifier: ^8.71.2
         version: 8.71.2(eslint@10.13.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+      yauzl:
+        specifier: ^3.4.0
+        version: 3.4.0
 
   packages/adapter-postgres: {}
 

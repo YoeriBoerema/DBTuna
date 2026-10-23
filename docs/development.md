@@ -30,17 +30,16 @@ Open the repository root in VS Code and press F5. The configured build task laun
 For an installable artifact:
 
 ```sh
-npm run build
 npm run package
 ```
 
-The current package command writes `../dbtuna-0.6.13.vsix`. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
+The package filename is derived from `package.json`; see the generated [build information](build-info.md). Packaging builds first, checks the archived manifest and compares runtime entry points with the fresh bundles. In VS Code, run **Extensions: Install from VSIX...** to install it, then **Developer: Reload Window**. Source version and published GitHub release version can differ; building does not publish a release.
 
 ## Verify
 
 | Command | Coverage |
 | --- | --- |
-| `npm run verify` | TypeScript, lint, unit tests, host/webview builds and all browser suites |
+| `npm run verify` | Generated build information, formatting, TypeScript, lint, unit tests, host/webview builds and all browser suites |
 | `npm run verify -- --postgres --vscode` | The above plus disposable PostgreSQL integration and VS Code activation |
 | `npm test` | Unit tests |
 | `npm run test:browser` | Browser suites against existing dist bundles |
@@ -71,3 +70,5 @@ AI tests use mock transport. A live OpenAI request requires a separately supplie
 ## Changing database support
 
 Native parsers belong in adapter packages; live database behavior belongs behind the host connector contract. Keep the two-click confirmation in the execution controls and execution authorization in the host. See [adding a connector](adapter-development.md) and [security](security.md) before modifying collection or execution paths.
+
+`npm run format:check` checks formatting without edits. `npm run format` applies it. After changing the version, run `npm run docs:versions`; packaging also refreshes the generated build information.

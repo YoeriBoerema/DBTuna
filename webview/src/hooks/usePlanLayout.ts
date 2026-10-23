@@ -18,7 +18,6 @@ export function usePlanLayout(
   plan: QueryPlan,
   view: PlanView,
   revision: number,
-  fitRevision: number,
 ) {
   const [nodes, setNodes] = useState<FlowNode[]>([]),
     [edges, setEdges] = useState<Edge[]>([]),
@@ -30,27 +29,23 @@ export function usePlanLayout(
   const [layoutReady, setLayoutReady] = useState(0);
   const fittedLayout = useRef(0);
   useEffect(() => {
-    if (!initialized || !layoutReady || fittedLayout.current === layoutReady) return;
+    if (!initialized || !layoutReady || fittedLayout.current === layoutReady)
+      return;
     let nextFrame = 0;
     const frame = requestAnimationFrame(() => {
-      nextFrame = requestAnimationFrame(
-        () => {
-          fittedLayout.current = layoutReady;
-          void flow.fitView({
-            padding: 0.2,
-            maxZoom: view === "compact" ? 1.25 : 2,
-          });
-        },
-      );
+      nextFrame = requestAnimationFrame(() => {
+        fittedLayout.current = layoutReady;
+        void flow.fitView({
+          padding: 0.2,
+          maxZoom: view === "compact" ? 1.25 : 2,
+        });
+      });
     });
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(nextFrame);
     };
   }, [initialized, layoutReady, view]);
-  useEffect(() => {
-    void flow.fitView({ padding: 0.2, maxZoom: view === "compact" ? 1.25 : 2 });
-  }, [fitRevision]);
   useEffect(() => {
     if (!plan) return;
     let stale = false;

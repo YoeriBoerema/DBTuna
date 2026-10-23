@@ -13,6 +13,12 @@ export function validateSql(sql: string) {
       "Unsupported or incomplete PostgreSQL syntax. Select one complete SELECT, VALUES, INSERT, or WITH statement without surrounding log text; some PostgreSQL syntax is not supported by the parser.",
     );
   }
+  return validatePostgresAst(sql, ast);
+}
+export function validatePostgresAst(
+  sql: string,
+  ast: ReturnType<typeof parse>,
+) {
   if (ast.length !== 1) throw Error("Select exactly one complete statement.");
   // Only the main statement may insert. CTE bodies must remain read-oriented.
   let main: unknown = ast[0];

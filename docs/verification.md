@@ -2,19 +2,19 @@
 
 [Documentation](README.md) · [Development](development.md)
 
-Current source: **v0.6.7**. Verification recorded **22 October 2026**. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
+Source version: see [generated build information](build-info.md). Verification recorded **23 October 2026** for the v0.6.14 refactor release. This page reports evidence from this development environment, not a guarantee across all supported databases or systems.
 
 ## Current checks
 
 | Check | Result and scope |
 | --- | --- |
-| Unit tests | 76 passed: native fixtures, validation, graph/batch invariants, connectors, execution binding, profile storage, AI transport and asynchronous state |
-| TypeScript and ESLint | Passed, including browser helpers and verification scripts |
+| Unit tests | 90 passed: native fixtures, validation, graph/batch invariants, connectors, execution binding, profile storage, AI transport and asynchronous state |
+| Formatting, TypeScript and ESLint | Passed, including packaging scripts, browser helpers and generated build-information checks |
 | Host and webview bundles | Built successfully |
-| Browser suites | Passed in headless Edge: layout, navigation, 500 ms tooltips, view switching, query sections, actual controls and structured/plain-text AI presentation |
+| Browser suites | All seven suites passed in headless Edge: layout, navigation, 500 ms tooltips, view switching, query sections, actual controls, local analysis/navigation, resizing and AI presentation |
 | PostgreSQL integration | Passed on disposable PostgreSQL 18.4: estimates, joins, six INSERT forms, unchanged estimate row counts, actual SELECT, committed actual INSERT, rollback and cancellation |
 | VS Code activation | Passed on isolated VS Code 1.96.4: activation, command registration, sample panel and SQL editor |
-| VSIX packaging | v0.6.7 built successfully; packaging does not install or publish it |
+| VSIX packaging | Version-derived package built and verified: archived manifest and runtime hashes match this checkout; packaging does not install or publish it |
 | Live SQL Server | Not run; fixtures, protocol, normalization and browser checks passed |
 | Live OpenAI requests | Not run; mock transport and UI checks passed |
 
@@ -58,3 +58,5 @@ This opt-in test creates/drops a uniquely named table and verifies estimated and
 - Browser timing observations are smoke checks, not performance guarantees.
 
 Older checkpoints are in the [verification history](archive/verification-history.md). They preserve historical counts and behavior and should not be used as current instructions.
+
+Refactor regressions also cover snapshot identity across serialization and execution-availability changes, explicit confirmation/display transitions, connector classification, all conversion warnings with provenance, per-rule applicability reasons and version-derived artifact naming. Tests are grouped by behavior and share native fixture builders. The PostgreSQL integration expectation for an unsupported DELETE was refreshed from Failed to Skipped to match the existing tolerant Explain behavior.

@@ -12,34 +12,34 @@ export function prepareTsqlExplain(batch: string): ExplainCandidate[] {
     // Classify before collecting; rejected text is never sent to the server.
   }
   const masked = maskTsql(batch);
-  if (/\b(BEGIN|IF|WHILE|TRY|CATCH|PROCEDURE|PROC|FUNCTION|TRIGGER)\b/i.test(masked))
-    return [{ sql: batch, skippedReason: "Control flow or module definitions cannot be safely separated. Select an independent query instead." }];
-
+  const unsupported = unsupportedBatchReason(masked);
+  if (unsupported) return [{ sql: batch, skippedReason: unsupported }];
   const result: ExplainCandidate[] = [];
   const declarations: string[] = [];
   let blocked = false;
-  let start = 0;
-  // Masking preserves offsets and hides semicolons in strings/comments/identifiers.
-  // NOCOUNT also commonly appears on its own line without a semicolon.
-  const boundaries = [...masked.matchAll(/;|\bSET\s+NOCOUNT\s+(?:ON|OFF)[ \t]*(?=\r?$)/gim)]
-    .map((match) => match.index! + match[0].length);
-  boundaries.push(batch.length);
-  for (const end of boundaries) {
-    const sql = batch.slice(start, end).trim();
-    start = end;
-    const tokens = maskTsql(sql).replace(/;\s*$/, "").trim();
-    if (!tokens) continue;
+  for (const { sql, tokens } of splitStatements(batch, masked)) {
     if (/^SET\s+NOCOUNT\s+(ON|OFF)$/i.test(tokens)) {
-      result.push({ sql, skippedReason: "SET NOCOUNT is omitted from estimated explanation." });
+      result.push({
+        sql,
+        skippedReason: "SET NOCOUNT is omitted from estimated explanation.",
+      });
       continue;
     }
     if (blocked) {
-      result.push({ sql, skippedReason: "Earlier session or variable setup is unsupported. Select this query separately or start a new GO batch." });
+      result.push({
+        sql,
+        skippedReason:
+          "Earlier session or variable setup is unsupported. Select this query separately or start a new GO batch.",
+      });
       continue;
     }
     if (/^(SET|USE|EXEC|EXECUTE|:|\$\()/i.test(tokens)) {
       blocked = true;
-      result.push({ sql, skippedReason: "Unsupported session, variable or dynamic setup; subsequent statements in this GO batch are skipped to avoid misleading plans." });
+      result.push({
+        sql,
+        skippedReason:
+          "Unsupported session, variable or dynamic setup; subsequent statements in this GO batch are skipped to avoid misleading plans.",
+      });
       continue;
     }
     if (/^DECLARE\b/i.test(tokens)) {
@@ -58,12 +58,49 @@ export function prepareTsqlExplain(batch: string): ExplainCandidate[] {
       validateTsql(candidate);
       result.push({ sql: candidate });
     } catch (error) {
-      result.push({ sql, skippedReason: /^CREATE\s+TABLE\b/i.test(tokens)
-        ? "CREATE TABLE is not executed during Explain. Queries that need this table may fail if it does not already exist."
-        : error instanceof Error ? error.message : "Unsupported statement." });
+      result.push({
+        sql,
+        skippedReason: /^CREATE\s+TABLE\b/i.test(tokens)
+          ? "CREATE TABLE is not executed during Explain. Queries that need this table may fail if it does not already exist."
+          : error instanceof Error
+            ? error.message
+            : "Unsupported statement.",
+      });
     }
   }
   if (!result.length && declarations.length)
-    result.push({ sql: declarations.join("\n"), skippedReason: "Declarations contain no query to explain." });
+    result.push({
+      sql: declarations.join("\n"),
+      skippedReason: "Declarations contain no query to explain.",
+    });
   return result;
+}
+
+function unsupportedBatchReason(masked: string): string | undefined {
+  if (
+    /\b(BEGIN|IF|WHILE|TRY|CATCH|PROCEDURE|PROC|FUNCTION|TRIGGER)\b/i.test(
+      masked,
+    )
+  )
+    return "Control flow or module definitions cannot be safely separated. Select an independent query instead.";
+}
+function splitStatements(
+  batch: string,
+  masked: string,
+): { sql: string; tokens: string }[] {
+  // Masked offsets preserve quoted semicolons and nested comments. NOCOUNT may
+  // appear alone on a line without the usual statement terminator.
+  const boundaries = [
+    ...masked.matchAll(/;|\bSET\s+NOCOUNT\s+(?:ON|OFF)[ \t]*(?=\r?$)/gim),
+  ].map((match) => match.index! + match[0].length);
+  boundaries.push(batch.length);
+  let start = 0;
+  const statements = [];
+  for (const end of boundaries) {
+    const sql = batch.slice(start, end).trim();
+    const tokens = masked.slice(start, end).replace(/;\s*$/, "").trim();
+    start = end;
+    if (tokens) statements.push({ sql, tokens });
+  }
+  return statements;
 }

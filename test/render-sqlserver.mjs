@@ -62,19 +62,39 @@ try {
     .getByText("Estimated CPU cost", { exact: true })
     .waitFor();
   await screenshot(page, { path: "media/sqlserver-plan.png" });
-  await page.evaluate((payload) => window.postMessage({
-    type: "BATCH_LOADED", payload,
-  }, "*"), {
-    ...batch,
-    items: [...batch.items, {
-      index: 3, sql: "SET NOCOUNT ON;", status: "skipped",
-      error: "SET NOCOUNT is omitted from estimated explanation.",
-    }],
-  });
-  await page.locator(".batch-summary").getByText(/1 skipped/).waitFor();
+  await page.evaluate(
+    (payload) =>
+      window.postMessage(
+        {
+          type: "BATCH_LOADED",
+          payload,
+        },
+        "*",
+      ),
+    {
+      ...batch,
+      items: [
+        ...batch.items,
+        {
+          index: 3,
+          sql: "SET NOCOUNT ON;",
+          status: "skipped",
+          error: "SET NOCOUNT is omitted from estimated explanation.",
+        },
+      ],
+    },
+  );
+  await page
+    .locator(".batch-summary")
+    .getByText(/1 skipped/)
+    .waitFor();
   const skipped = page.getByRole("region", { name: "Query 3", exact: true });
   await skipped.getByText("Skipped", { exact: true }).waitFor();
-  await skipped.getByText("SET NOCOUNT is omitted from estimated explanation.", { exact: true }).waitFor();
+  await skipped
+    .getByText("SET NOCOUNT is omitted from estimated explanation.", {
+      exact: true,
+    })
+    .waitFor();
   if (await skipped.locator(".operator, [role=alert]").count())
     throw Error("Skipped setup rendered an operator or failure alert");
   if (errors.length) throw Error(errors.join("\n"));

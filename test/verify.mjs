@@ -1,5 +1,17 @@
 import { readdirSync } from "node:fs";
 import { runNode } from "./helpers/run.mjs";
+runNode(["scripts/sync-build-info.mjs", "--check"]);
+runNode([
+  "node_modules/prettier/bin/prettier.cjs",
+  "--check",
+  "src",
+  "packages",
+  "webview",
+  "test",
+  "scripts",
+  "*.json",
+  "*.mjs",
+]);
 runNode(["node_modules/typescript/bin/tsc", "--noEmit"]);
 runNode([
   "node_modules/eslint/bin/eslint.js",
@@ -7,6 +19,8 @@ runNode([
   "packages",
   "webview",
   "test",
+  "scripts",
+  "*.mjs",
 ]);
 runNode([
   "--import",

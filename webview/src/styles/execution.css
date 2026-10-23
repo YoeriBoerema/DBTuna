@@ -1,0 +1,45 @@
+.execution-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--vscode-panel-border, #414a5e);
+  background: var(--vscode-editorWidget-background, #202633);
+}
+.execution-controls [role="tablist"] {
+  display: flex;
+  gap: 2px;
+}
+.execution-controls [role="tab"][aria-selected="true"] {
+  outline: 1px solid var(--vscode-focusBorder, #7ca9ff);
+}
+.execution-controls button {
+  font-size: 11px;
+  padding: 7px 10px;
+}
+.execution-controls [role="status"] {
+  font-size: 11px;
+}
+.execution-error {
+  padding: 10px 16px;
+  color: var(--vscode-errorForeground, #ffb0b0);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.executable-plan {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.executable-plan > .plan-workspace {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+.execution-controls,
+.execution-error {
+  flex-shrink: 0;
+}

@@ -1,3 +1,4 @@
+import { snapshotPlan } from "../../../packages/plan-core/src/snapshots";
 import { randomUUID } from "node:crypto";
 import {
   type PlanBatch,
@@ -5,8 +6,6 @@ import {
 } from "../../../packages/plan-core/src/batch";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { databaseConnector } from "../connectors/registry";
-import { prepareTsqlExplain } from "../sql/sqlServerExplain";
-import { preparePostgresExplain } from "../sql/postgresExplain";
 export function prepareBatch(
   statements: string[],
   type: "postgresql" | "sqlserver" = "postgresql",
@@ -15,21 +14,19 @@ export function prepareBatch(
     kind: "dbtuna-batch",
     schemaVersion: "1.0",
     id: randomUUID(),
-    items: statements.flatMap((sql) => type === "sqlserver" ? prepareTsqlExplain(sql) : [preparePostgresExplain(sql)]).map(({ sql, skippedReason }, i) => {
-      if (skippedReason)
-        return { index: i + 1, sql, status: "skipped", error: skippedReason };
-      try {
-        databaseConnector(type).validate(sql);
-        return { index: i + 1, sql, status: "pending" };
-      } catch (e) {
-        return {
-          index: i + 1,
-          sql,
-          status: "error",
-          error: e instanceof Error ? e.message : "Invalid SQL.",
-        };
-      }
-    }),
+    items: statements
+      .flatMap((sql) => databaseConnector(type).classify(sql))
+      .map((candidate, i) => {
+        const base = { index: i + 1, sql: candidate.sql };
+        switch (candidate.status) {
+          case "supported":
+            return { ...base, status: "pending" };
+          case "skipped":
+            return { ...base, status: "skipped", error: candidate.reason };
+          case "invalid":
+            return { ...base, status: "error", error: candidate.reason };
+        }
+      }),
   });
 }
 export async function explainBatch(
@@ -45,7 +42,8 @@ export async function explainBatch(
   let batch = initial;
   const update = (
     index: number,
-    change: { status: "running" } | { status: "error" | "cancelled"; error: string },
+    change:
+      { status: "running" } | { status: "error" | "cancelled"; error: string },
   ) => {
     batch = {
       ...batch,
@@ -79,7 +77,7 @@ export async function explainBatch(
         index: 0,
         sql: plan.query || original.sql,
         status: "complete" as const,
-        plan,
+        plan: snapshotPlan(plan),
       }));
       const items = [
         ...batch.items.slice(0, i),
@@ -122,7 +120,7 @@ export function completedBatch(plans: QueryPlan[]): PlanBatch {
       index: index + 1,
       sql: plan.query || "",
       status: "complete",
-      plan: { ...plan, id: `${id}:${index + 1}` },
+      plan: snapshotPlan({ ...plan, id: `${id}:${index + 1}` }),
     })),
   });
 }

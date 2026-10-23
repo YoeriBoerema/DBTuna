@@ -2,6 +2,16 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.14
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.14)
+
+- Move statement classification into connectors and reuse parsed PostgreSQL statements during preparation.
+- Split database fact extractors and individual analysis rules; preserve all conversion warnings with provenance and report rule applicability.
+- Reconcile plan snapshots without whole-plan serialization and consolidate execution confirmation/display state.
+- Separate batch presentation, feature styles and behavioral test suites; remove obsolete fitting state.
+- Derive package names from the manifest, verify archived runtime bundles, generate build information and enforce formatting checks.
+
 ## 0.6.13
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.13)

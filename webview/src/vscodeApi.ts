@@ -20,7 +20,11 @@ function restorePlan(plan?: QueryPlan): QueryPlan | undefined {
   return parsed.success
     ? {
         ...parsed.data,
-        application: { ...parsed.data.application, executionAvailable: false },
+        application: {
+          ...parsed.data.application,
+          snapshotId: undefined,
+          executionAvailable: false,
+        },
       }
     : undefined;
 }

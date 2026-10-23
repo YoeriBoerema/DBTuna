@@ -1,3 +1,4 @@
+import { snapshotPlan } from "../../../packages/plan-core/src/snapshots";
 import { doomHtml } from "./doomHtml";
 import * as vscode from "vscode";
 import { randomBytes } from "node:crypto";
@@ -108,6 +109,7 @@ export class PanelManager implements vscode.Disposable {
     this.ready = false;
     this.cancel();
     const disableRun = (plan: QueryPlan) => {
+      plan.application.snapshotId = crypto.randomUUID();
       plan.application.executionAvailable = false;
       plan.application.executionUnavailableReason =
         "Run Explain again to enable execution.";
@@ -167,9 +169,9 @@ export class PanelManager implements vscode.Disposable {
   }
   show(plan: QueryPlan) {
     this.batch = undefined;
-    this.plan = plan;
+    this.plan = snapshotPlan(plan);
     this.open();
-    this.send({ type: "PLAN_LOADED", payload: plan });
+    this.send({ type: "PLAN_LOADED", payload: this.plan });
   }
   showBatch(batch: PlanBatch) {
     this.plan = undefined;

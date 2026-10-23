@@ -26,6 +26,9 @@ Estimated collection, confirmed actual execution and optional AI advice are sepa
 | `src/extension/ai/` | Advice input, instructions, model/credential setup and bounded API transport |
 | `packages/adapter-sdk/` | Native parser contract and registry |
 | `packages/adapter-postgres/`, `packages/adapter-sqlserver/` | Engine-specific normalization |
+| `packages/plan-analysis/` | Database fact extractors, applicability/coverage, pure individual rules and finding contracts |
+| `scripts/` | Version-derived packaging, VSIX verification and generated build information |
+| `webview/src/styles/` | Feature styles imported in explicit cascade order |
 | `packages/plan-core/` | Canonical schemas, graph invariants, batches, advice contract and resource policies |
 | `webview/src/components/` | Graph, operators, details, AI controls and per-query presentation |
 | `webview/src/hooks/`, `webview/src/state/` | Layout and asynchronous request lifecycles, pure reducers |
@@ -66,3 +69,5 @@ Each query owns its graph provider and operator selection. Off-screen graphs mou
 Browser-safe policy constants live in `packages/plan-core/src/limits.ts`. Byte and character bounds are distinct; XML and object nesting have separate names even when configured equally. Graph, whole-batch and actual-document budgets are explicit. Database connection, estimate, actual, lock and cancellation timeouts are separate policies; AI model listing and advice also have separate timeouts.
 
 See [security](security.md) for trust, data exposure and write semantics, and [verification](verification.md) for the evidence supporting the current implementation.
+
+Completed plan snapshots carry an explicit rendering identity in application.snapshotId. Batch reconciliation reuses matching snapshots without serializing their native payloads; execution availability and its reason are compared separately. Snapshot identity never grants execution authorization. Restored snapshots discard that identity and disable execution until the host sends a live plan. Replacing content must create a fresh snapshot ID.

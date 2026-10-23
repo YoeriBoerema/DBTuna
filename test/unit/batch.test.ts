@@ -1,3 +1,4 @@
+import { postgresNative } from "../helpers/nativePlans.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { splitSqlBatch } from "../../src/extension/sql/batchSelection";
@@ -10,10 +11,7 @@ import {
   restoreBatch,
 } from "../../packages/plan-core/src/batch";
 import { PostgresAdapter } from "../../packages/adapter-postgres/src/postgresAdapter";
-const plan = () =>
-  new PostgresAdapter().parse([
-    { Plan: { "Node Type": "Result", "Total Cost": 1 } },
-  ]);
+const plan = () => new PostgresAdapter().parse(postgresNative());
 test("batch selection honors exact text; handles strings, identifiers, comments and dollar quotes", () => {
   const selected = `SELECT 'a;''b'; -- ignored ;\n SELECT * FROM "table;name"; /* outer /* ; */ tail */ SELECT $tag$a;b$tag$; SELECT 4;`;
   const parts = splitSqlBatch("not sql", selected);

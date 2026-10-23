@@ -10,16 +10,14 @@ export function PlanWorkspace({
   plan,
   view,
   revision,
-  fitRevision,
 }: {
   plan: QueryPlan;
   view: PlanView;
   revision: number;
-  fitRevision: number;
 }) {
   const canvasId = "plan-" + useId().replace(/:/g, "");
   const { nodes, setNodes, edges, selected, busy, error, flow, pick } =
-    usePlanLayout(plan, view, revision, fitRevision);
+    usePlanLayout(plan, view, revision);
   const navigate = (id: string) => {
     const node = nodes.find((candidate) => candidate.id === id);
     if (!node) return;
@@ -88,7 +86,11 @@ export function PlanWorkspace({
             )}
           </ReactFlow>
         </section>
-        <Details plan={plan} node={plan.nodes.find((n) => n.id === selected)} onNavigate={navigate} />
+        <Details
+          plan={plan}
+          node={plan.nodes.find((n) => n.id === selected)}
+          onNavigate={navigate}
+        />
       </div>
       <footer>
         <span>

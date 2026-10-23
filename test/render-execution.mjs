@@ -102,9 +102,15 @@ try {
       exact: true,
     })
     .click();
-  if (await page.evaluate(() => window.__messages.some(m => m.type === "RUN_ACTUAL")))
+  if (
+    await page.evaluate(() =>
+      window.__messages.some((m) => m.type === "RUN_ACTUAL"),
+    )
+  )
     throw Error("First click executed SQL before inline confirmation");
-  await first.getByRole("button", { name: "Are you sure?", exact: true }).click();
+  await first
+    .getByRole("button", { name: "Are you sure?", exact: true })
+    .click();
   const request = await page.evaluate(() =>
     window.__messages.find((message) => message.type === "RUN_ACTUAL"),
   );
@@ -176,19 +182,28 @@ try {
       exact: true,
     })
     .click();
-  await first.getByRole("button", { name: "Are you sure?", exact: true }).click();
+  await first
+    .getByRole("button", { name: "Are you sure?", exact: true })
+    .click();
   const repeat = await page.evaluate(() =>
     window.__messages.filter((m) => m.type === "RUN_ACTUAL").at(-1),
   );
   await first
     .getByRole("button", { name: "Cancel execution", exact: true })
     .click();
-  if (await page.evaluate(
-    (id) => window.__messages.some(
-      (m) => m.type === "CANCEL_ACTUAL" && m.requestId === id,
-    ), repeat.requestId,
-  )) throw Error("First cancellation click sent a cancellation request");
-  await first.getByRole("button", { name: "Are you sure?", exact: true }).click();
+  if (
+    await page.evaluate(
+      (id) =>
+        window.__messages.some(
+          (m) => m.type === "CANCEL_ACTUAL" && m.requestId === id,
+        ),
+      repeat.requestId,
+    )
+  )
+    throw Error("First cancellation click sent a cancellation request");
+  await first
+    .getByRole("button", { name: "Are you sure?", exact: true })
+    .click();
   if (
     !(await page.evaluate(
       (id) =>
@@ -213,9 +228,13 @@ try {
       exact: true,
     })
     .click();
-  const beforeInsert = await page.evaluate(() => window.__messages.filter(m => m.type === "RUN_ACTUAL").length);
+  const beforeInsert = await page.evaluate(
+    () => window.__messages.filter((m) => m.type === "RUN_ACTUAL").length,
+  );
   if (beforeInsert !== 2) throw Error("First INSERT click executed SQL");
-  await second.getByRole("button", { name: "Are you sure?", exact: true }).click();
+  await second
+    .getByRole("button", { name: "Are you sure?", exact: true })
+    .click();
   const insertRequest = await page.evaluate(() =>
     window.__messages.filter((m) => m.type === "RUN_ACTUAL").at(-1),
   );

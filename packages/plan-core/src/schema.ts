@@ -54,6 +54,7 @@ export const nodeSchema = z.object({
 });
 // DBTuna-owned presentation fields. Native database attributes stay in metadata.
 export const applicationSchema = z.object({
+  snapshotId: z.string().optional(),
   connectionLabel: z.string().optional(),
   executionAvailable: z.boolean().optional(),
   executionUnavailableReason: z.string().optional(),

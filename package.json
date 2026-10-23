@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL and SQL Server execution plans beside your SQL.",
-  "version": "0.6.13",
+  "version": "0.6.14",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {
@@ -31,13 +31,15 @@
     "test": "tsx --test test/unit/*.test.ts",
     "test:postgres": "tsx --test test/integration/*.test.ts",
     "test:vscode": "node test/vscode/run.cjs",
-    "package": "vsce package --no-dependencies --no-rewrite-relative-links --allow-missing-repository --out ../dbtuna-0.6.7.vsix",
-    "lint": "eslint src packages webview test",
+    "package": "node scripts/package.mjs",
+    "lint": "eslint src packages webview test scripts *.mjs",
     "verify": "node test/verify.mjs",
     "test:browser": "node test/browser.mjs",
     "screenshots": "node test/browser.mjs --update-screenshots",
     "test:embedded": "node test/integration/embedded.mjs",
-    "format": "prettier --write src packages webview test *.json *.mjs"
+    "format": "prettier --write src packages webview test scripts *.json *.mjs",
+    "format:check": "prettier --check src packages webview test scripts *.json *.mjs",
+    "docs:versions": "node scripts/sync-build-info.mjs"
   },
   "contributes": {
     "commands": [
@@ -161,7 +163,8 @@
     "prettier": "^3.9.10",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
-    "typescript-eslint": "^8.71.2"
+    "typescript-eslint": "^8.71.2",
+    "yauzl": "^3.4.0"
   },
   "icon": "media/icon.png",
   "repository": {

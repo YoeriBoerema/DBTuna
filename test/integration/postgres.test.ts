@@ -110,7 +110,7 @@ test("real PostgreSQL read-only EXPLAIN workflow", async () => {
   );
   assert.deepEqual(
     batch.items.map((item) => item.status),
-    ["complete", "complete", "error", "error", "complete"],
+    ["complete", "complete", "error", "skipped", "complete"],
   );
   await withClient(config, async (c) =>
     assert.equal(

@@ -1,0 +1,57 @@
+.ai-assistance {
+  margin: 18px 0;
+  padding: 12px;
+  border: 1px solid var(--vscode-panel-border, #414a5e);
+  border-radius: 6px;
+}
+.ai-assistance h3 {
+  margin-top: 0;
+}
+.ai-disclosure {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--vscode-descriptionForeground, #abb4c4);
+}
+.ai-assistance label {
+  display: block;
+  font-size: 11px;
+  margin: 10px 0 5px;
+}
+.ai-assistance textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 64px;
+  padding: 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--vscode-input-foreground, #f0f3fa);
+  background: var(--vscode-input-background, #161b25);
+  border: 1px solid var(--vscode-input-border, #414a5e);
+  border-radius: 3px;
+}
+.ai-assistance textarea:focus {
+  outline: 1px solid var(--vscode-focusBorder, #7ca9ff);
+}
+.ai-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.ai-controls button {
+  font-size: 11px;
+  padding: 7px 9px;
+}
+.ai-output {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.65;
+  margin-top: 10px;
+}
+.ai-error {
+  color: var(--vscode-errorForeground, #ffb0b0);
+  font-size: 12px;
+  line-height: 1.5;
+}

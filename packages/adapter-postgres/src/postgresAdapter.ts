@@ -30,7 +30,8 @@ export class PostgresAdapter implements QueryPlanAdapter {
       const n = raw as Record<string, unknown>;
       if (typeof n["Node Type"] !== "string")
         throw Error("Operator is missing Node Type.");
-      if (nodes.length >= PLAN_LIMITS.operators) throw Error("Maximum 1000 operators.");
+      if (nodes.length >= PLAN_LIMITS.operators)
+        throw Error("Maximum 1000 operators.");
       const number = (key: string) => {
         const v = n[key];
         if (v === undefined) return undefined;

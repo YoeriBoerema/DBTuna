@@ -1,0 +1,244 @@
+.operator {
+  width: 236px;
+  height: 145px;
+  border: 1px solid var(--vscode-panel-border, #46516a);
+  border-top: 3px solid var(--accent);
+  border-radius: 7px;
+  background: var(--vscode-editorWidget-background, #252b39);
+  padding: 12px 15px;
+  box-shadow: 0 6px 20px #0002;
+  --accent: var(--vscode-charts-blue, #6f9fed);
+}
+.operator.selected,
+.react-flow__node.selected .operator {
+  outline: 2px solid var(--vscode-focusBorder, #82afff);
+  outline-offset: 3px;
+}
+.operator.JOIN {
+  --accent: var(--vscode-charts-purple, #ad91e6);
+}
+.operator.TABLE_SCAN {
+  --accent: var(--vscode-charts-orange, #dea670);
+}
+.operator.INDEX_ACCESS {
+  --accent: var(--vscode-charts-green, #73ccb3);
+}
+.operator.SORT,
+.operator.AGGREGATE {
+  --accent: var(--vscode-charts-yellow, #d6c078);
+}
+.operator.compact {
+  width: 164px;
+  height: 132px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 0 8px;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+.operator.compact:hover {
+  background: transparent;
+}
+.operator.compact:hover .operator-icon {
+  border-color: var(--vscode-focusBorder, #82afff);
+}
+.operator-icon {
+  width: 48px;
+  height: 48px;
+  margin: 2px auto 0;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  border: 1px solid var(--vscode-panel-border, #46516a);
+  border-radius: 8px;
+  background: var(--vscode-editorWidget-background, #252b39);
+}
+.operator.compact strong {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.operator.compact .relation {
+  height: 14px;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compact-metrics {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+  gap: 2px;
+  font-size: 9px;
+  line-height: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--vscode-descriptionForeground, #8e98ac);
+}
+.operator.compact .react-flow__handle {
+  top: 27px;
+  opacity: 0;
+}
+.operator.compact .react-flow__handle-left {
+  left: calc(50% - 24px);
+}
+.operator.compact .react-flow__handle-right {
+  right: calc(50% - 24px);
+}
+.operator.compact:hover .react-flow__handle,
+.operator.compact.selected .react-flow__handle {
+  opacity: 1;
+}
+@media (forced-colors: active) {
+  .operator.compact {
+    border: 1px solid CanvasText;
+  }
+  .operator-icon {
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+}
+.node-category {
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+  display: flex;
+  justify-content: space-between;
+}
+.operator strong {
+  display: block;
+  font-size: 15px;
+  margin-top: 9px;
+}
+.relation {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground, #8e98ac);
+  margin-top: 4px;
+}
+.node-metrics {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--vscode-panel-border, #414a5e);
+  margin-top: 10px;
+  padding-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.node-metrics small {
+  display: block;
+  font-size: 8px;
+  color: var(--vscode-descriptionForeground, #8e98ac);
+  margin-top: 3px;
+}
+.react-flow__handle {
+  background: var(--vscode-charts-blue, #7da5e2);
+  border: 2px solid var(--vscode-editor-background, #171b24);
+  width: 8px;
+  height: 8px;
+}
+.react-flow__edge-path {
+  stroke: var(--vscode-descriptionForeground, #6e7d98);
+}
+.react-flow__arrowhead {
+  color: var(--vscode-descriptionForeground, #6e7d98);
+}
+.react-flow__edge-text {
+  fill: var(--vscode-foreground, #d9dce5);
+}
+.react-flow__edge-textbg {
+  fill: var(--vscode-editor-background, #171b24);
+}
+.react-flow__controls-button {
+  background: var(--vscode-editorWidget-background, #252b39);
+  fill: var(--vscode-foreground, #eee);
+  border-color: var(--vscode-panel-border, #414a5e);
+}
+.react-flow__minimap {
+  background: var(--vscode-editorWidget-background, #252b39);
+}
+footer {
+  height: 44px;
+  padding: 8px 20px;
+  border-top: 1px solid var(--vscode-panel-border, #303746);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--vscode-descriptionForeground, #8e98ac);
+  font-size: 10px;
+  gap: 10px;
+}
+footer select {
+  padding: 3px;
+  max-width: 200px;
+  font-size: 10px;
+  margin-left: 7px;
+}
+footer i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--vscode-charts-green, #7dcdb0);
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.empty-mark {
+  font-size: 56px;
+  color: var(--vscode-charts-blue, #7ca9ff);
+  margin-bottom: 28px;
+}
+.empty h2 {
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+.empty p {
+  line-height: 1.8;
+  color: var(--vscode-descriptionForeground, #8e98ac);
+}
+.empty button {
+  margin: 14px 5px 26px;
+}
+.empty small {
+  color: var(--vscode-descriptionForeground, #8e98ac);
+}
+.error,
+.loading {
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--vscode-panel-border, #414a5e);
+}
+.error {
+  color: var(--vscode-errorForeground, #f8a7a7);
+}
+@media (max-width: 850px) {
+  header {
+    flex-wrap: wrap;
+  }
+  aside {
+    width: 260px;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+  footer > span:last-child {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .operator {
+    border: 2px solid CanvasText;
+  }
+  .operator.selected {
+    outline: 3px solid Highlight;
+  }
+}

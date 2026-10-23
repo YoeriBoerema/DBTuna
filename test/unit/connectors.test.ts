@@ -15,6 +15,9 @@ const xml = readFileSync("fixtures/sqlserver/multi-statement.sqlplan", "utf8");
 test("connectors expose dialect-specific splitting, validation and execution preparation through one contract", () => {
   const pg = databaseConnector("postgresql");
   assert.equal(pg.split("SELECT 1; SELECT 2;").length, 2);
+  assert.equal(pg.classify("SELECT 1")[0].status, "supported");
+  assert.equal(pg.classify("SET search_path TO public")[0].status, "skipped");
+  assert.equal(pg.classify("SELECT FROM")[0].status, "invalid");
   assert.throws(() => pg.validate("DELETE FROM t"));
   const [plan] = pg.parse(rawPg);
   plan.query = "INSERT INTO t VALUES (1)";
@@ -23,6 +26,11 @@ test("connectors expose dialect-specific splitting, validation and execution pre
     kind: "INSERT",
   });
   const sqlServer = databaseConnector("sqlserver");
+  assert.equal(sqlServer.classify("SELECT 1")[0].status, "supported");
+  assert.equal(
+    sqlServer.classify("SET NOCOUNT ON; SELECT 1;")[0].status,
+    "skipped",
+  );
   assert.equal(sqlServer.split("SELECT 1; SELECT 2;\nGO\nSELECT 3;").length, 2);
   assert.throws(() => sqlServer.validate("SET SHOWPLAN_XML OFF; SELECT 1"));
   const [statement] = sqlServer.parse(xml);

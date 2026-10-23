@@ -63,7 +63,7 @@ export function ExecutablePlan(
           </button>
         )}
         <span role="status">
-          {status === "confirming"
+          {status === "preparing"
             ? "Preparing execution..."
             : status === "running"
               ? `Executing: ${(elapsed / 1000).toFixed(1)} s`
