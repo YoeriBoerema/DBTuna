@@ -112,6 +112,7 @@ try {
     "1",
   );
   await first.getByRole("tab", { name: "Estimated", exact: true }).click();
+  await first.locator(".operator").first().waitFor();
   await first
     .getByRole("combobox", { name: "Select operator" })
     .selectOption("2");

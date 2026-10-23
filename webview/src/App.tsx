@@ -47,9 +47,6 @@ function App() {
           </div>
         </div>
         <div className="actions">
-          <button onClick={() => api.postMessage({ type: "AI_SETTINGS" })}>
-            AI Assistance
-          </button>
           <span className="estimated">Plans</span>
           <select
             aria-label="Plan view"

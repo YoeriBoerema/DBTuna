@@ -2,7 +2,12 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
-## Unreleased
+## 0.7.2
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.2)
+
+- Label each query Predicted until a successful actual-plan collection, then Verified; preserve verification when switching views and reset it for a fresh Explain.
+- Remove the large AI Assistance button from the visualization header; operator advice and VS Code AI settings remain available.
 
 - License original DBTuna materials on the current branch for non-commercial use and free sharing only; explicitly prohibit commercial use and resale. Existing MIT releases through v0.7.1 and independently licensed third-party components retain their original terms.
 

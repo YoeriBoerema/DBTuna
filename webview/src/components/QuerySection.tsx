@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
+import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import type { PlanBatch } from "../../../packages/plan-core/src/batch";
 import { estimatedPlanCost } from "../../../packages/plan-core/src/metrics";
 import { fmt } from "../format";
@@ -15,6 +16,18 @@ export function QuerySection({
   view: PlanView;
   revision: number;
 }) {
+  const [verifiedSource, setVerifiedSource] = useState<QueryPlan>();
+  const onVerifiedChange = useCallback(
+    (verified: boolean) => {
+      setVerifiedSource(verified ? item.plan : undefined);
+    },
+    [item.plan],
+  );
+  const verified =
+    !!item.plan &&
+    (verifiedSource === item.plan ||
+      item.plan.application.planKind === "actual" ||
+      item.plan.nodes.some((node) => node.actuals));
   return (
     <section
       key={batchId + ":" + item.index}
@@ -25,7 +38,9 @@ export function QuerySection({
         <h2>Query {item.index}</h2>
         <span className={"query-status " + item.status}>
           {item.status === "complete"
-            ? "Planned"
+            ? verified
+              ? "Verified"
+              : "Predicted"
             : item.status === "pending"
               ? "Queued"
               : item.status === "running"
@@ -50,7 +65,12 @@ export function QuerySection({
         <pre>{item.sql}</pre>
       </details>
       {item.plan ? (
-        <LazyPlan plan={item.plan} view={view} revision={revision} />
+        <LazyPlan
+          plan={item.plan}
+          view={view}
+          revision={revision}
+          onVerifiedChange={onVerifiedChange}
+        />
       ) : item.error ? (
         <div
           role={item.status === "error" ? "alert" : "status"}

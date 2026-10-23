@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { PlanWorkspace } from "./PlanWorkspace";
 import { fmt } from "../format";
 import { useActualExecution } from "../hooks/useActualExecution";
-export function ExecutablePlan(
-  props: React.ComponentProps<typeof PlanWorkspace>,
-) {
+export function ExecutablePlan({
+  onVerifiedChange,
+  ...props
+}: React.ComponentProps<typeof PlanWorkspace> & {
+  onVerifiedChange?: (verified: boolean) => void;
+}) {
   const { plan } = props;
   const {
     actual,
@@ -19,6 +22,9 @@ export function ExecutablePlan(
     run,
     cancel,
   } = useActualExecution(plan);
+  useEffect(() => {
+    onVerifiedChange?.(!!actual);
+  }, [actual, onVerifiedChange]);
   return (
     <div className="executable-plan">
       <div className="execution-controls">

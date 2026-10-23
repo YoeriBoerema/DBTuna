@@ -73,6 +73,13 @@ try {
     second = page.getByRole("region", { name: "Query 2", exact: true }),
     third = page.getByRole("region", { name: "Query 3", exact: true });
   await first.locator(".operator").first().waitFor();
+  const expectBadge = async (section, label) => {
+    await section
+      .locator(".query-heading .query-status")
+      .getByText(label, { exact: true })
+      .waitFor();
+  };
+  await expectBadge(first, "Predicted");
   if (
     !(await first
       .getByRole("button", {
@@ -114,6 +121,7 @@ try {
   const request = await page.evaluate(() =>
     window.__messages.find((message) => message.type === "RUN_ACTUAL"),
   );
+  await expectBadge(first, "Predicted");
   if (request.planId !== estimated.id || Object.keys(request).length !== 3)
     throw Error("Execution request included wrong plan or extra SQL");
   const message = {
@@ -134,6 +142,7 @@ try {
       .isDisabled())
   )
     throw Error("Stale actual response accepted");
+  await expectBadge(first, "Predicted");
   await page.evaluate(
     (m) =>
       window.postMessage(
@@ -143,11 +152,14 @@ try {
     message,
   );
   await first.getByText(/Executing:/).waitFor();
+  await expectBadge(first, "Predicted");
   await page.evaluate((m) => window.postMessage(m, "*"), message);
   await first
     .locator(".operator")
     .getByText("Actual rows: 10", { exact: true })
     .waitFor();
+  await expectBadge(first, "Verified");
+  await expectBadge(second, "Predicted");
   if (
     (await first
       .getByRole("tab", { name: "Actual", exact: true })
@@ -155,6 +167,7 @@ try {
   )
     throw Error("Actual tab not selected");
   await first.getByRole("tab", { name: "Estimated", exact: true }).click();
+  await expectBadge(first, "Verified");
   await first
     .locator(".operator")
     .getByText("Est. rows: 100", { exact: true })
@@ -222,6 +235,7 @@ try {
     error: "Cancelled. Data may already have changed.",
   });
   await first.getByRole("alert").waitFor();
+  await expectBadge(first, "Verified");
   await second
     .getByRole("button", {
       name: "Run query and collect actual plan",
@@ -249,6 +263,7 @@ try {
     error: "Execution failed. Data may already have changed.",
   });
   await second.getByRole("alert").waitFor();
+  await expectBadge(second, "Predicted");
   await second
     .locator(".operator strong")
     .getByText("Insert", { exact: true })
@@ -276,6 +291,19 @@ try {
     throw Error("Runtime toolbar clipped the plan footer");
   await screenshot(page, { path: "media/actual-plan.png" });
   if (errors.length) throw Error(errors.join("\n"));
+  const freshBatch = {
+    ...batch,
+    id: "fresh-explain",
+    items: batch.items.map((item) => ({
+      ...item,
+      plan: { ...item.plan, id: item.plan.id + ":fresh" },
+    })),
+  };
+  await page.evaluate(
+    (payload) => window.postMessage({ type: "BATCH_LOADED", payload }, "*"),
+    freshBatch,
+  );
+  await expectBadge(first, "Predicted");
   console.log(
     "Actual-plan UI: explicit per-query execution, estimated/actual toggle, measured rows, elapsed state, cancellation, errors and offline guard verified.",
   );

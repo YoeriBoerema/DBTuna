@@ -7,10 +7,12 @@ export function LazyPlan({
   plan,
   view,
   revision,
+  onVerifiedChange,
 }: {
   plan: QueryPlan;
   view: PlanView;
   revision: number;
+  onVerifiedChange?: (verified: boolean) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -32,7 +34,12 @@ export function LazyPlan({
     <div ref={ref} className="lazy-plan">
       {visible ? (
         <ReactFlowProvider>
-          <ExecutablePlan plan={plan} view={view} revision={revision} />
+          <ExecutablePlan
+            plan={plan}
+            view={view}
+            revision={revision}
+            onVerifiedChange={onVerifiedChange}
+          />
         </ReactFlowProvider>
       ) : (
         <div className="plan-placeholder">Plan ready · scroll to explore</div>
