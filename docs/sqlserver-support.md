@@ -47,3 +47,9 @@ Total cost means estimated subtree cost. CPU and I/O estimates retain native opt
 Showplan XML is parsed once before statement normalization. The document-wide operator limit cannot be bypassed by splitting it into multiple statements. XML DTD/entity declarations are rejected.
 
 An old connection-schema migration clears legacy profiles and their associated secrets once. Typed profiles persist normally afterward. See [verification](verification.md) for the isolated live-test setup.
+
+## Disposable live tests
+
+Run `npm run test:sqlserver:docker` with Docker running. The framework starts a pinned SQL Server 2022 Developer image on `127.0.0.1:55440`, generates a test-only sa password, creates `dbtuna_integration`, runs the live suite and removes the container/database afterward. Images stay cached; saved DBTuna profiles are never used. `npm run test:databases` includes this with PostgreSQL and Oracle; `npm run verify -- --databases` also runs the standard checks.
+
+The shared lifecycle helper verifies ownership before cleanup and cleans up after suite/startup failures. Live coverage includes estimates that do not execute writes, actual SELECT/INSERT, independent queries, large result rowsets, failed INSERTs, mixed skipped/failed statements, and cancellation of a genuinely blocked INSERT with server-request cleanup. SQL Server can return a statement without graphical operators for constant-only SQL such as SELECT 1; the parser reports this explicitly rather than inventing a graph.

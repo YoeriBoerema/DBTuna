@@ -30,7 +30,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 4. For live plans, open a trusted workspace and run **DBTuna: Add Connection**.
 5. Select SQL in an editor, then run **DBTuna: Explain Query** from the Command Palette or editor context menu.
 
-The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.7.0**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
+The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.7.1**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
 
 Oracle Database is new in **0.7.0 - The Oracle Has Arrived!** It supports estimated plans, confirmed actual SELECT/INSERT, query batches, local analysis, AI assistance and plan imports. See the [Oracle guide](docs/oracle-support.md) for service-name setup, permissions and testing limits.
 
@@ -42,7 +42,7 @@ Oracle Database is new in **0.7.0 - The Oracle Has Arrived!** It supports estima
 | Actual plan collection | EXPLAIN ANALYZE with buffers | STATISTICS XML | Instrumented, uniquely tagged SQL_ID/child cursor |
 | Query grouping | Semicolon-delimited statements | Semicolon queries and GO batches | Oracle semicolons, quoting and SQL*Plus slash boundaries |
 | Authentication | Username/password | SQL authentication or explicit NTLM credentials | Thin username/password, service/PDB, optional TCPS |
-| Verification | Live PostgreSQL 18.4 integration | Fixtures, protocol and browser checks; live tests opt-in | Fixtures, collector and browser checks; live tests opt-in |
+| Verification | Live PostgreSQL 18.4 integration | Live disposable SQL Server 2022 integration; other configurations remain opt-in | Fixtures, collector and browser checks; live tests opt-in |
 
 Common SELECT and INSERT forms are supported. Supported syntax differs by engine; UPDATE, DELETE, DDL and dynamic execution are outside the current scope. Read the [Oracle](docs/oracle-support.md), [PostgreSQL](docs/postgres-support.md) and [SQL Server](docs/sqlserver-support.md) guides for exact boundaries.
 

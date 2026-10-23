@@ -6,7 +6,7 @@ Oracle support arrived in **0.7.0 — The Oracle Has Arrived!**
 
 Choose **Oracle Database** in **DBTuna: Add Connection**. Enter host, TCP port (normally 1521), **service name/PDB**, username and password. This field is a service name, not a SID. An optional current schema controls unqualified object resolution. Existing PostgreSQL and SQL Server connections are preserved.
 
-The bundled node-oracledb 6.10 driver uses Thin mode; Oracle Instant Client is unnecessary. The initial compatibility targets are Oracle 19c and Oracle Free. They are targets rather than a verified live-version matrix: live Oracle integration could not run in the release development environment. SID descriptors, Thick mode and external/enterprise authentication are outside this release.
+The bundled node-oracledb 6.10 driver uses Thin mode; Oracle Instant Client is unnecessary. The initial compatibility targets are Oracle 19c and Oracle Free. Oracle Free 23.26.3 has now passed live Docker integration; Oracle 19c remains a compatibility target rather than a verified version. SID descriptors, Thick mode and external/enterprise authentication are outside this release.
 
 Verified TLS uses TCPS and server-name matching. One-way TCPS can use system trust; an optional wallet directory must contain an unencrypted `ewallet.pem` suitable for Thin mode. Encrypted wallets and wallet-password setup are not offered in this release. Use **Disable TLS** only for an appropriate local development connection. Passwords stay in VS Code SecretStorage; wallet files are managed on your machine.
 
@@ -65,3 +65,11 @@ Import canonical DBTuna JSON, the versioned `dbtuna-oracle-native` JSON envelope
 The synthetic [Oracle fixture](../fixtures/oracle/sort-native.json) can be imported without a connection. Unit/collector tests and a browser suite exercise Oracle behavior. To run live integration against a **disposable localhost Oracle Free PDB mapped to port 55441**, set `DBTUNA_ORACLE_TEST=1` and `DBTUNA_ORACLE_TEST_PASSWORD`, then run `npm run test:oracle`. The host, service and username are fixed to prevent accidental tests against saved production connections. The test creates/drops a uniquely named table and commits INSERTs.
 
 Official references: [node-oracledb installation](https://node-oracledb.readthedocs.io/en/v6.10.0/user_guide/installation.html), [Oracle EXPLAIN PLAN](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/EXPLAIN-PLAN.html), [runtime plan fields](https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/V-SQL_PLAN_STATISTICS_ALL.html), [DBMS_XPLAN](https://docs.oracle.com/en/database/oracle/oracle-database/19/arpls/DBMS_XPLAN.html).
+
+## Live Docker verification
+
+After the 0.7.0 release, all seven live checks passed on Oracle Free **23.26.3.0.0**. They cover estimated SELECT/INSERT without target changes, three committed INSERT forms, complete multi-chunk SELECT fetching, concurrent cursor attribution, joins/CTEs/alternative quotes, LOB cleanup, constraint errors, mixed skipped/failed batches, in-flight INSERT cancellation with rollback and released locks, and missing cursor privileges before execution.
+
+Run `npm run test:oracle:docker` with Docker running. The harness uses a pinned image digest, creates a uniquely named container on `127.0.0.1:55441`, generates test-only credentials without logging them, waits for health, grants test access, runs the suite and removes its container/database. No saved connections or host data mounts are used. The first run may need to download the image. The cached image is retained for later runs.
+
+A [real actual-plan fixture](../fixtures/oracle/real-oracle-free-23.json) preserves native statistics from this isolated database. TCPS/wallets, Oracle 19c and RAC remain unverified.

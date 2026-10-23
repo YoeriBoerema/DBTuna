@@ -5,4 +5,3 @@ ignoredBuiltDependencies:
   - '@vscode/vsce-sign'
   - keytar
   - oracledb
-  - '@embedded-postgres/windows-x64'

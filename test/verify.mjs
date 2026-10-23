@@ -32,7 +32,15 @@ runNode([
 ]);
 runNode(["build.mjs"]);
 runNode(["test/browser.mjs"]);
-if (process.argv.includes("--postgres"))
-  runNode(["test/integration/embedded.mjs"]);
+if (process.argv.includes("--databases"))
+  runNode(["test/integration/databases.mjs"]);
+else {
+  if (process.argv.includes("--postgres"))
+    runNode(["test/integration/postgres-docker.mjs"]);
+  if (process.argv.includes("--sqlserver"))
+    runNode(["test/integration/sqlserver-docker.mjs"]);
+  if (process.argv.includes("--oracle"))
+    runNode(["test/integration/oracle-docker.mjs"]);
+}
 if (process.argv.includes("--vscode")) runNode(["test/vscode/run.cjs"]);
 console.log("DBTuna verification passed.");

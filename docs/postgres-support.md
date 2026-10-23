@@ -41,3 +41,7 @@ Mappings cover scans, index/bitmap access, joins, hashing, sorting, aggregation,
 Connections use username/password and either verified TLS or disabled TLS for local development. TLS uses Node's certificate trust store. Custom CA/client-certificate selection and connection pooling are not implemented.
 
 See [verification](verification.md) for live SELECT, join, estimated INSERT and actual INSERT checks.
+
+## Disposable Docker integration
+
+Run `npm run test:postgres:docker` with Docker running. It provisions a pinned PostgreSQL 18.4 image on `127.0.0.1:55439`, generates a test-only password, waits for TCP readiness, runs estimated/actual SELECT and INSERT checks, and removes the owned container and data volume afterward. `npm run test:databases` runs all three database containers sequentially; `npm run verify -- --databases` adds full verification. No saved DBTuna connections are read. The embedded PostgreSQL runner has been removed.

@@ -2,6 +2,16 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.7.1
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.7.1)
+
+- Add disposable Docker integration runners for PostgreSQL, SQL Server and Oracle with pinned images, generated credentials, localhost-only ports and ownership-checked cleanup.
+- Add `npm run test:databases` and `npm run verify -- --databases`, plus individual engine runners.
+- Replace embedded PostgreSQL and its native dependency with the shared Docker approach; fixture updates are now explicit.
+- Expand live SQL Server and Oracle coverage for estimates, actual SELECT/INSERT, batches, failed writes, cancellation, permissions, large rowsets and LOB cleanup.
+- Preserve a captured Oracle Free plan and add Docker lifecycle regressions. Live verification passed on PostgreSQL 18.4, SQL Server 2022 and Oracle Free 23.26.3.
+
 ## 0.7.0 - The Oracle Has Arrived!
 
 - Add Oracle Thin service/PDB connections, optional schema and verified TCPS. Existing profiles are preserved.

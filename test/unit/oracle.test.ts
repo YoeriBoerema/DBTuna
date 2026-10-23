@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
+import { readFileSync } from "node:fs";
 import {
   OracleAdapter,
   type OracleEnvelope,
@@ -31,6 +32,22 @@ import { advicePayload } from "../../src/extension/ai/advicePayload";
 import { AdapterRegistry } from "../../packages/adapter-sdk/src/registry";
 
 const adapter = new OracleAdapter();
+test("real Oracle Free 23 runtime plan preserves rows, cost scope and native evidence", () => {
+  const raw: unknown = JSON.parse(
+    readFileSync("fixtures/oracle/real-oracle-free-23.json", "utf8"),
+  );
+  const plan = adapter.parse(raw);
+  assert.equal(plan.database.version, "23.26.3.0.0");
+  assert.equal(plan.source.synthetic, false);
+  assert.equal(plan.application.planKind, "actual");
+  assert.ok(plan.nodes.some((node) => node.actuals?.rows === 2051));
+  assert.ok(plan.nodes.some((node) => /SORT/.test(node.nativeType)));
+  assert.doesNotThrow(() => analyzePlan(plan));
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(validate(plan))),
+    JSON.parse(JSON.stringify(plan)),
+  );
+});
 const parsedProfile = profileSchema.parse({
   type: "oracle",
   id: "oracle-test",

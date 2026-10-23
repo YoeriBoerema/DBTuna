@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {
@@ -30,18 +30,22 @@
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/unit/*.test.ts",
-    "test:postgres": "tsx --test test/integration/*.test.ts",
+    "test:postgres": "tsx --test test/integration/postgres.test.ts",
     "test:vscode": "node test/vscode/run.cjs",
     "package": "node scripts/package.mjs",
     "lint": "eslint src packages webview test scripts *.mjs",
     "verify": "node test/verify.mjs",
     "test:browser": "node test/browser.mjs",
     "screenshots": "node test/browser.mjs --update-screenshots",
-    "test:embedded": "node test/integration/embedded.mjs",
+    "test:postgres:docker": "node test/integration/postgres-docker.mjs",
     "format": "prettier --write src packages webview test scripts *.json *.mjs",
     "format:check": "prettier --check src packages webview test scripts *.json *.mjs",
     "docs:versions": "node scripts/sync-build-info.mjs",
-    "test:oracle": "tsx --test test/integration/oracle.test.ts"
+    "test:oracle": "tsx --test test/integration/oracle.test.ts",
+    "test:oracle:docker": "node test/integration/oracle-docker.mjs",
+    "test:sqlserver": "tsx --test test/integration/sqlserver.test.ts",
+    "test:sqlserver:docker": "node test/integration/sqlserver-docker.mjs",
+    "test:databases": "node test/integration/databases.mjs"
   },
   "contributes": {
     "commands": [
@@ -160,7 +164,6 @@
     "@types/vscode": "^1.96.0",
     "@vscode/test-electron": "^2.5.0",
     "@vscode/vsce": "^3.6.0",
-    "embedded-postgres": "18.4.0-beta.17",
     "esbuild": "^0.25.0",
     "eslint": "^10.13.0",
     "playwright": "^1.64.1",
