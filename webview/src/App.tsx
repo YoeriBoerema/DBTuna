@@ -47,7 +47,6 @@ function App() {
           </div>
         </div>
         <div className="actions">
-          <span className="estimated">Plans</span>
           <select
             aria-label="Plan view"
             value={view}
