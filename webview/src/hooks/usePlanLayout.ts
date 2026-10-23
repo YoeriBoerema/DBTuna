@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   useReactFlow,
   useNodesInitialized,
@@ -28,16 +28,19 @@ export function usePlanLayout(
   const flow = useReactFlow();
   const initialized = useNodesInitialized();
   const [layoutReady, setLayoutReady] = useState(0);
+  const fittedLayout = useRef(0);
   useEffect(() => {
-    if (!initialized || !layoutReady) return;
+    if (!initialized || !layoutReady || fittedLayout.current === layoutReady) return;
     let nextFrame = 0;
     const frame = requestAnimationFrame(() => {
       nextFrame = requestAnimationFrame(
-        () =>
+        () => {
+          fittedLayout.current = layoutReady;
           void flow.fitView({
             padding: 0.2,
             maxZoom: view === "compact" ? 1.25 : 2,
-          }),
+          });
+        },
       );
     });
     return () => {

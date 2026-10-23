@@ -2,6 +2,14 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.12
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.12)
+
+- Click a local analysis finding to select, highlight and center its operator using the Navigate dropdown behavior.
+- Support Enter and Space activation and visible keyboard focus.
+- Prevent automatic fitting from overriding navigation and fix duplicate analysis-panel keys when switching operators.
+
 ## 0.6.11
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.11)

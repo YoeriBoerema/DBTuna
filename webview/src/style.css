@@ -677,3 +677,9 @@ footer i {
 }
 .rule-finding h4 { margin: 0 0 8px; }
 .analysis-limitation { color: var(--vscode-descriptionForeground, #8e98ac); }
+.rule-finding[role="button"] { cursor: pointer; }
+.rule-finding[role="button"]:hover,
+.rule-finding[role="button"]:focus-visible {
+  border-color: var(--vscode-focusBorder, #6296df);
+  outline: 1px solid var(--vscode-focusBorder, #6296df);
+}

@@ -1,6 +1,6 @@
 # Local plan analysis
 
-PostgreSQL and SQL Server plans are analyzed locally, without an API key or AI request. Operator details show findings for the selected operator; **Show whole query** includes findings elsewhere in that statement. Estimated/Actual view switching analyzes the displayed plan. Imported plans also work, subject to the evidence they contain.
+PostgreSQL and SQL Server plans are analyzed locally, without an API key or AI request. Operator details show findings for the selected operator; **Show whole query** includes findings elsewhere in that statement. Click a finding (or focus it and press Enter/Space) to select, highlight and center its operator using the same navigation as the dropdown. Estimated/Actual view switching analyzes the displayed plan. Imported plans also work, subject to the evidence they contain.
 
 Each finding has a stable rule ID and version, severity, confidence, operator IDs, observed values, suggested investigation and limitations. Findings are computed from the plan without SQL execution, schema queries, automatic rewrites or index changes. AI assistance remains a separate explicit action.
 

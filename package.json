@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL and SQL Server execution plans beside your SQL.",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "publisher": "dbtuna-local",
   "license": "MIT",
   "engines": {

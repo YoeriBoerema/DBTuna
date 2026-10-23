@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { Analysis } from "../../../packages/plan-analysis/src/analyze";
 import { fmt } from "../format";
 
-export function RuleFindings({ analysis, nodeId }: { analysis: Analysis; nodeId?: string }) {
+export function RuleFindings({ analysis, nodeId, onNavigate }: { analysis: Analysis; nodeId?: string; onNavigate: (id: string) => void }) {
   const [wholeQuery, setWholeQuery] = useState(!nodeId);
   const [shown, setShown] = useState(20);
   const findings = wholeQuery ? analysis.findings : analysis.findings.filter((finding) => finding.nodeIds.includes(nodeId!));
@@ -16,7 +16,16 @@ export function RuleFindings({ analysis, nodeId }: { analysis: Analysis; nodeId?
       <p>{wholeQuery ? "Whole query" : "Selected operator"}: {findings.length} findings.</p>
       {!findings.length && <p>No findings from the available rules and evidence.</p>}
       {findings.slice(0, shown).map((finding) => (
-        <article className="rule-finding" key={finding.ruleId + ":" + finding.nodeIds.join(",")}>
+        <article className="rule-finding" key={finding.ruleId + ":" + finding.nodeIds.join(",")}
+          role="button" tabIndex={0}
+          aria-label={`${finding.title}: highlight operator ${finding.nodeIds[0]}`}
+          onClick={() => onNavigate(finding.nodeIds[0])}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onNavigate(finding.nodeIds[0]);
+            }
+          }}>
           <h4>{finding.title}</h4>
           <small>{finding.severity} · {finding.confidence} confidence · operator {finding.nodeIds.join(", ")}</small>
           <dl>{Object.entries(finding.evidence).map(([name, value]) => (

@@ -7,14 +7,14 @@ import type {
 } from "../../../packages/plan-core/src/types";
 import { AiAdvice } from "./AiAdvice";
 import { fmt } from "../format";
-export function Details({ node, plan }: { node?: PlanNode; plan: QueryPlan }) {
+export function Details({ node, plan, onNavigate }: { node?: PlanNode; plan: QueryPlan; onNavigate: (id: string) => void }) {
   const analysis = useMemo(() => analyzePlan(plan), [plan]);
   if (!node)
     return (
       <aside>
         <h2>Operator details</h2>
         <p>Select an operation to inspect its estimates and properties.</p>
-        <RuleFindings key={plan.id} analysis={analysis} />
+        <RuleFindings key={plan.id} analysis={analysis} onNavigate={onNavigate} />
       </aside>
     );
   return (
@@ -89,7 +89,7 @@ export function Details({ node, plan }: { node?: PlanNode; plan: QueryPlan }) {
           </React.Fragment>
         ))}
       </dl>
-      <RuleFindings key={plan.id + ":" + node.id} analysis={analysis} nodeId={node.id} />
+      <RuleFindings key={"rules:" + plan.id + ":" + node.id} analysis={analysis} nodeId={node.id} onNavigate={onNavigate} />
       <h3>Native attributes</h3>
       {Object.entries(node.properties).map(([k, v]) => (
         <details key={k}>

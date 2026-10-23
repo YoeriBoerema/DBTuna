@@ -20,6 +20,17 @@ export function PlanWorkspace({
   const canvasId = "plan-" + useId().replace(/:/g, "");
   const { nodes, setNodes, edges, selected, busy, error, flow, pick } =
     usePlanLayout(plan, view, revision, fitRevision);
+  const navigate = (id: string) => {
+    const node = nodes.find((candidate) => candidate.id === id);
+    if (!node) return;
+    pick(id);
+    const measured = flow.getNode(id)?.measured;
+    void flow.setCenter(
+      node.position.x + (measured?.width ?? nodeSize(view).width) / 2,
+      node.position.y + (measured?.height ?? nodeSize(view).height) / 2,
+      { zoom: 1, duration: 250 },
+    );
+  };
   return (
     <div className="plan-workspace">
       {error && (
@@ -77,7 +88,7 @@ export function PlanWorkspace({
             )}
           </ReactFlow>
         </section>
-        <Details plan={plan} node={plan.nodes.find((n) => n.id === selected)} />
+        <Details plan={plan} node={plan.nodes.find((n) => n.id === selected)} onNavigate={navigate} />
       </div>
       <footer>
         <span>
@@ -89,19 +100,7 @@ export function PlanWorkspace({
           <select
             aria-label="Select operator"
             value={selected || ""}
-            onChange={(e) => {
-              pick(e.target.value);
-              const n = nodes.find((n) => n.id === e.target.value);
-              if (n)
-                void flow.setCenter(
-                  n.position.x + nodeSize(view).width / 2,
-                  n.position.y + nodeSize(view).height / 2,
-                  {
-                    zoom: 1,
-                    duration: 250,
-                  },
-                );
-            }}
+            onChange={(e) => navigate(e.target.value)}
           >
             {plan.nodes.map((n) => (
               <option key={n.id} value={n.id}>

@@ -30,7 +30,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 4. For live plans, open a trusted workspace and run **DBTuna: Add Connection**.
 5. Select SQL in an editor, then run **DBTuna: Explain Query** from the Command Palette or editor context menu.
 
-The current source is **v0.6.11**; the latest published release is **v0.6.11**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
+The current source is **v0.6.12**; the latest published release is **v0.6.12**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
 
 ## Database support
 
