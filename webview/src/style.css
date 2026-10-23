@@ -663,3 +663,17 @@ footer i {
 .execution-error {
   flex-shrink: 0;
 }
+.rule-analysis {
+  margin-top: 18px;
+  border-top: 1px solid var(--vscode-panel-border, #46516a);
+  padding-top: 8px;
+}
+.rule-finding {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--vscode-panel-border, #46516a);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.rule-finding h4 { margin: 0 0 8px; }
+.analysis-limitation { color: var(--vscode-descriptionForeground, #8e98ac); }

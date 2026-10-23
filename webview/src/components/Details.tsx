@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { analyzePlan } from "../../../packages/plan-analysis/src/analyze";
+import { RuleFindings } from "./RuleFindings";
 import type {
   PlanNode,
   QueryPlan,
@@ -6,11 +8,13 @@ import type {
 import { AiAdvice } from "./AiAdvice";
 import { fmt } from "../format";
 export function Details({ node, plan }: { node?: PlanNode; plan: QueryPlan }) {
+  const analysis = useMemo(() => analyzePlan(plan), [plan]);
   if (!node)
     return (
       <aside>
         <h2>Operator details</h2>
         <p>Select an operation to inspect its estimates and properties.</p>
+        <RuleFindings key={plan.id} analysis={analysis} />
       </aside>
     );
   return (
@@ -85,6 +89,7 @@ export function Details({ node, plan }: { node?: PlanNode; plan: QueryPlan }) {
           </React.Fragment>
         ))}
       </dl>
+      <RuleFindings key={plan.id + ":" + node.id} analysis={analysis} nodeId={node.id} />
       <h3>Native attributes</h3>
       {Object.entries(node.properties).map(([k, v]) => (
         <details key={k}>

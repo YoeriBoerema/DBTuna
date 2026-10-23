@@ -2,6 +2,13 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.6.11
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.11)
+
+- Add local rules-based analysis for PostgreSQL and SQL Server, with evidence, confidence, limitations and per-operator or whole-query findings.
+- Check cardinality discrepancies, spills, repeated access, filtering, predicate candidates and SQL Server warnings without AI requests or database changes.
+
 ## 0.6.10
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.6.10)

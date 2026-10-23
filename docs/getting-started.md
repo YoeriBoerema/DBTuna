@@ -39,6 +39,8 @@ The Plan view selector switches between compact horizontal and top-down cards. C
 
 ## Collect an actual plan
 
+Operator details also include [local plan analysis](local-analysis.md), with evidence-backed rules for PostgreSQL and SQL Server. No API key is needed. Actual plans enable more checks than estimates alone; use **Show whole query** to inspect findings from other operators.
+
 After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Click once to change the button to **Are you sure?**, then click again to execute the displayed query on its original connection. Each run requires both clicks.
 
 **A successful INSERT run commits changes and may fire triggers. Repeating Run repeats its effects. SELECT functions also execute. Cancellation cannot guarantee that changes are undone.**
