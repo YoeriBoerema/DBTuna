@@ -65,7 +65,15 @@ export function restoreBatch(input: unknown): PlanBatch {
             error:
               "Imported batch was not completed. Run Explain Query to plan these statements.",
           }
-        : item,
+        : item.status === "error" ||
+            item.status === "skipped" ||
+            item.status === "cancelled"
+          ? {
+              ...item,
+              error:
+                "Imported diagnostic text omitted. Re-run Explain for current diagnostics.",
+            }
+          : item,
     ),
   };
 }

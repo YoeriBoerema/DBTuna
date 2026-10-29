@@ -4,17 +4,17 @@
 
 ## Set up a checkout
 
-Use Node.js 22 or later, npm and Git. VS Code 1.96 or later is the extension target. Clone the repository with a GitHub account that has access, then work from its root:
+Use Node.js 22 or later, pnpm 11.25.0 and Git. VS Code 1.96 or later is the extension target. Clone the repository with a GitHub account that has access, then work from its root:
 
 ```sh
 git clone https://github.com/YoeriBoerema/DBTuna.git
 cd DBTuna
-npm install
+pnpm install --frozen-lockfile
 npx playwright install chromium
 npm run verify
 ```
 
-pnpm is also supported. Dependencies are bundled into the VSIX; users installing the extension do not need Node.js or node_modules.
+pnpm is the canonical release installer; use the committed lockfile with --frozen-lockfile. npm may run scripts, but npm install does not reproduce the reviewed pnpm dependency tree. Dependencies are bundled into the VSIX; users installing the extension do not need Node.js or node_modules.
 
 `DBTUNA_BROWSER` can point to an installed Chromium-family executable instead of Playwright's downloaded browser. For example, in Windows PowerShell:
 

@@ -69,6 +69,7 @@ test("execution coordinator requires current live bindings, original connection,
     () => current,
     {
       trusted: () => trusted,
+      confirm: async () => true,
       exportPlan: async () => {},
     },
     async () => {
@@ -134,6 +135,7 @@ test("INSERT duplicates are blocked and uncertain outcomes never retry", async (
     () => true,
     {
       trusted: () => true,
+      confirm: async () => true,
       exportPlan: async () => {},
     },
     async () => {
@@ -200,6 +202,7 @@ test("active execution cancellation retains uncertainty and does not trigger ano
     () => true,
     {
       trusted: () => true,
+      confirm: async () => true,
       exportPlan: async () => {},
     },
     async (p, password, sql, signal) => {
@@ -250,6 +253,7 @@ test("SQL Server execution identifies the requested statement's actual plan amon
     () => true,
     {
       trusted: () => true,
+      confirm: async () => true,
       exportPlan: async () => {},
     },
     async () => ({ raw: native }),
@@ -289,6 +293,7 @@ test("SQL Server run uses host-bound declarations without adding setup SQL to th
     () => true,
     {
       trusted: () => true,
+      confirm: async () => true,
       exportPlan: async () => {},
     },
     async (_profile, _password, sql) => {

@@ -13,6 +13,8 @@ import {
 } from "../../../packages/adapter-oracle/src/oracleAdapter";
 import { oracleKind, validateOracle } from "../sql/oracleSelection";
 import type { Profile } from "./profile";
+import { databaseError } from "./databaseErrors";
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 
 export type OracleConnection = Pick<
   Connection,
@@ -38,14 +40,15 @@ export function oracleConfig(
   profile: Profile,
   password?: string,
 ): ConnectionAttributes {
-  if (profile.type !== "oracle") throw Error("Expected an Oracle connection.");
+  if (profile.type !== "oracle")
+    throw new UserFacingError("Expected an Oracle connection.");
   // This wizard offers Easy Connect service names only, not arbitrary descriptors.
   // Restrict its components so they cannot inject descriptor/security options.
   if (
     !/^[A-Za-z0-9._:[\]-]+$/.test(profile.host) ||
     !/^[A-Za-z0-9._-]+$/.test(profile.database)
   )
-    throw Error(
+    throw new UserFacingError(
       "Use an Oracle host and service name, not a SID or connect descriptor.",
     );
   const host =
@@ -87,7 +90,7 @@ export async function withOracle<T>(
   transport: OracleDriver = driver,
 ): Promise<T> {
   if (signal?.aborted)
-    throw Error("Oracle operation cancelled before connecting.");
+    throw new UserFacingError("Oracle operation cancelled before connecting.");
   let connection: OracleConnection | undefined,
     expired = false;
   let rejectStop: (error: Error) => void = () => {};
@@ -106,7 +109,7 @@ export async function withOracle<T>(
     cancellationDeadline = setTimeout(
       () =>
         rejectStop(
-          Error(
+          new UserFacingError(
             signal?.aborted
               ? "Oracle operation cancelled. INSERT outcomes may be uncertain if a commit was in progress."
               : "Oracle operation exceeded its overall deadline. INSERT outcomes may be uncertain if a commit was in progress.",
@@ -119,7 +122,7 @@ export async function withOracle<T>(
   signal?.addEventListener("abort", stop, { once: true });
   const check = () => {
     if (expired || signal?.aborted)
-      throw Error(
+      throw new UserFacingError(
         signal?.aborted
           ? "Oracle operation cancelled."
           : "Oracle operation exceeded its overall deadline.",
@@ -144,6 +147,8 @@ export async function withOracle<T>(
     const result = await Promise.race([action(connection, check), stopped]);
     check();
     return result;
+  } catch (error) {
+    throw databaseError(error);
   } finally {
     clearTimeout(timer);
     if (cancellationDeadline) clearTimeout(cancellationDeadline);
@@ -168,7 +173,7 @@ async function rows(
   });
   const value = result.rows || [];
   if (value.length > PLAN_LIMITS.operators)
-    throw Error("Oracle plan exceeds 1000 operators.");
+    throw new UserFacingError("Oracle plan exceeds 1000 operators.");
   return value;
 }
 
@@ -262,7 +267,9 @@ export async function collectOraclePlan(
           try {
             if (kind === "SELECT") {
               if (!result.resultSet)
-                throw Error("Oracle SELECT did not return a result set.");
+                throw new UserFacingError(
+                  "Oracle SELECT did not return a result set.",
+                );
               for (;;) {
                 check();
                 const chunk = await result.resultSet.getRows(128);
@@ -287,7 +294,7 @@ export async function collectOraclePlan(
             typeof cursors[0].SQL_ID !== "string" ||
             typeof cursors[0].CHILD_NUMBER !== "number"
           )
-            throw Error(
+            throw new UserFacingError(
               "Could not identify exactly one Oracle execution cursor; no actual plan was selected.",
             );
           planRows = await rows(
@@ -339,9 +346,12 @@ export async function collectOraclePlan(
                 ? " INSERT was not committed by DBTuna; connection cleanup attempts rollback. Autonomous trigger/function effects may persist."
                 : "";
         // Native errors can echo SQL and bind values; keep them out of UI/logs.
-        throw Error(
+        throw new UserFacingError(
           reason +
-            (typeof code === "number"
+            (typeof code === "number" &&
+            Number.isInteger(code) &&
+            code >= 0 &&
+            code <= 99999
               ? ` (ORA-${String(code).padStart(5, "0")})`
               : "") +
             outcome,

@@ -20,7 +20,7 @@ Oracle estimates write diagnostic PLAN_TABLE rows on a dedicated connection and 
 
 ## Confirmed execution
 
-Actual execution is an explicit, separate action. The host registers live estimates with their original profile snapshot and required setup context. It checks workspace trust, current plan identity and unchanged connection configuration before and after confirmation. SELECT and INSERT use the inline two-click Run/Are you sure? pattern; cancellation also requires two clicks. The original SQL remains in the query preview.
+Actual execution is an explicit, separate action. The host registers live estimates with their original profile snapshot and required setup context. SELECT and INSERT use the inline two-click Run/Are you sure? pattern followed by a modal VS Code confirmation showing the original connection, engine and SQL. The host checks workspace trust, current plan identity, SQL and unchanged connection configuration after approval and again after credential retrieval. Cancellation also requires two clicks. The original SQL remains in the query preview.
 
 Requests carry IDs only. Imported data, persisted executionAvailable flags and webview-supplied identifiers cannot create a live binding. Original batch setup is host-only; SQL Server may reuse only required leading literal DECLARE statements, never earlier queries. Only one run can be pending or active, duplicate requests are blocked and no automatic retries occur.
 
@@ -35,6 +35,10 @@ Webview scripts/styles are bundled locally. A nonce Content Security Policy disa
 Incoming messages must match a strict known schema. IDs, context and imported-plan SQL are bounded; credentials and arbitrary executable payloads are not accepted. Typed host responses distinguish success from errors and cancellation.
 
 Files are size-checked before reading. JSON/XML and graphs are bounded and validated before layout. XML DTD/entity declarations are rejected, and entity-looking text is decoded exactly once. Imported batches restore pending/running entries as cancelled and never resume SQL. Unknown native attributes remain available for inspection.
+
+Object inputs have the same aggregate UTF-8 JSON byte budget as text inputs, including keys and escaping. PostgreSQL dedicated sessions allow at most 5 MiB plus 64 KiB of protocol overhead, enforced on plaintext/decrypted TLS bytes before the driver's protocol parser. Oversized declared frames close the connection before their bodies arrive. This adapter is tested against the pinned pg driver; driver upgrades must retain those protocol tests. Decoded actual response limits are checked before PostgreSQL COMMIT.
+
+Native database error messages, details, hints and causes are excluded from notifications, execution results and newly generated batch diagnostics. Only controlled application messages and mapped permission/authentication/timeout guidance are shown. Imported historical diagnostic text is omitted on restoration. This does not redact the SQL or native attributes that plans intentionally retain.
 
 ## AI requests
 

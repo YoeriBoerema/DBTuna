@@ -31,7 +31,7 @@ Inspect estimated plans, collect actual plans after confirmation, and get option
 4. For live plans, open a trusted workspace and run **DBTuna: Add Connection**.
 5. Select SQL in an editor, then run **DBTuna: Explain Query** from the Command Palette or editor context menu.
 
-The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.8.0**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
+The source version is in [generated build information](docs/build-info.md); the latest published release is **v0.8.1**. See [development and packaging](docs/development.md). VS Code 1.96 or later is required.
 
 Oracle Database is new in **0.7.0 - The Oracle Has Arrived!** It supports estimated plans, confirmed actual SELECT/INSERT, query batches, local analysis, AI assistance and plan imports. See the [Oracle guide](docs/oracle-support.md) for service-name setup, permissions and testing limits.
 
@@ -64,8 +64,8 @@ AI assistance is optional. Clicking **Get AI advice** sends the displayed query,
 ## Develop
 
 ```sh
-npm install
-npx playwright install chromium
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 npm run verify
 npm run package
 ```

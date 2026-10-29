@@ -1,6 +1,7 @@
 import { PLAN_LIMITS } from "./limits";
 import { z } from "zod";
 import { normalizePlanApplication } from "./application";
+import { UserFacingError } from "./errors";
 export const categories = [
   "TABLE_SCAN",
   "INDEX_ACCESS",
@@ -97,20 +98,74 @@ export type OperatorCategory = (typeof categories)[number];
 export function bounded(input: unknown): unknown {
   if (typeof input === "string") {
     if (Buffer.byteLength(input) > PLAN_LIMITS.bytes)
-      throw Error("Plan exceeds 5 MiB.");
+      throw new UserFacingError("Plan exceeds 5 MiB.");
     try {
       input = JSON.parse(input);
     } catch {
-      throw Error("Invalid JSON execution plan.");
+      throw new UserFacingError("Invalid JSON execution plan.");
     }
     if (typeof input === "string") input = JSON.parse(input);
   }
-  let count = 0;
+  let count = 0,
+    bytes = 0;
+  const add = (size: number) => {
+    bytes += size;
+    if (bytes > PLAN_LIMITS.bytes)
+      throw new UserFacingError("Plan exceeds 5 MiB.");
+  };
+  // Count JSON UTF-8 bytes without serializing/copying unbounded strings.
+  const string = (value: string) => {
+    add(2);
+    for (let i = 0; i < value.length; i++) {
+      const c = value.charCodeAt(i);
+      if (c === 34 || c === 92) add(2);
+      else if (c < 32) add([8, 9, 10, 12, 13].includes(c) ? 2 : 6);
+      else if (c < 128) add(1);
+      else if (c < 2048) add(2);
+      else if (
+        c >= 0xd800 &&
+        c <= 0xdbff &&
+        value.charCodeAt(i + 1) >= 0xdc00 &&
+        value.charCodeAt(i + 1) <= 0xdfff
+      ) {
+        add(4);
+        i++;
+      } else if (c >= 0xd800 && c <= 0xdfff) add(6);
+      else add(3);
+    }
+  };
   const walk = (v: unknown, d: number) => {
     if (d > PLAN_LIMITS.objectDepth || ++count > PLAN_LIMITS.values)
-      throw Error("Plan exceeds nesting or size limits.");
-    if (v && typeof v === "object")
-      for (const x of Object.values(v)) walk(x, d + 1);
+      throw new UserFacingError("Plan exceeds nesting or size limits.");
+    if (typeof v === "string") string(v);
+    else if (v && typeof v === "object") {
+      add(2);
+      let first = true;
+      if (Array.isArray(v)) {
+        for (const x of v) {
+          if (!first) add(1);
+          first = false;
+          walk(x, d + 1);
+        }
+      } else
+        for (const [key, x] of Object.entries(v)) {
+          if (x === undefined) continue;
+          if (!first) add(1);
+          first = false;
+          string(key);
+          add(1);
+          walk(x, d + 1);
+        }
+    } else
+      add(
+        typeof v === "number"
+          ? String(v).length
+          : v === true
+            ? 4
+            : v === false
+              ? 5
+              : 4,
+      );
   };
   walk(input, 0);
   return input;
@@ -122,30 +177,31 @@ export function validate(input: unknown): QueryPlan {
     ids.size !== p.nodes.length ||
     new Set(p.edges.map((e) => e.id)).size !== p.edges.length
   )
-    throw Error("Duplicate graph IDs.");
+    throw new UserFacingError("Duplicate graph IDs.");
   if (
     new Set(p.rootNodeIds).size !== p.rootNodeIds.length ||
     p.rootNodeIds.some((id) => !ids.has(id))
   )
-    throw Error("Invalid roots.");
+    throw new UserFacingError("Invalid roots.");
   const children = new Map<string, string[]>();
   const parents = new Set<string>();
   for (const e of p.edges) {
     if (!ids.has(e.source) || !ids.has(e.target) || parents.has(e.target))
-      throw Error("Invalid edge endpoints or multiple parents.");
+      throw new UserFacingError("Invalid edge endpoints or multiple parents.");
     parents.add(e.target);
     children.set(e.source, [...(children.get(e.source) || []), e.target]);
   }
   const seen = new Set<string>();
   function visit(id: string) {
-    if (seen.has(id)) throw Error("Cycle or repeated root.");
+    if (seen.has(id)) throw new UserFacingError("Cycle or repeated root.");
     seen.add(id);
     for (const child of children.get(id) || []) visit(child);
   }
   for (const id of p.rootNodeIds) {
-    if (parents.has(id)) throw Error("Root has a parent.");
+    if (parents.has(id)) throw new UserFacingError("Root has a parent.");
     visit(id);
   }
-  if (seen.size !== ids.size) throw Error("Disconnected graph or cycle.");
+  if (seen.size !== ids.size)
+    throw new UserFacingError("Disconnected graph or cycle.");
   return p;
 }

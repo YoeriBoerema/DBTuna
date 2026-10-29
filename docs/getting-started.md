@@ -43,7 +43,7 @@ The Plan view selector switches between compact horizontal and top-down cards. C
 
 Operator details also include [local plan analysis](local-analysis.md), with evidence-backed rules for PostgreSQL, SQL Server and Oracle. No API key is needed. Explain-only plans now include estimated volume, repeated-work, predicate and sort/hash risks, plus SQL Server native index candidates when available. Actual plans enable measured checks; use **Show whole query** to inspect findings from other operators.
 
-After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Click once to change the button to **Are you sure?**, then click again to execute the displayed query on its original connection. Each run requires both clicks.
+After a live Explain, an eligible SELECT or INSERT offers **Run query and collect actual plan**. Click once to change the button to **Are you sure?**, then click again to open a VS Code confirmation. Review the connection, engine and SQL and choose **Run query** to execute. Dismissing the dialog prevents execution. Each run requires fresh host approval.
 
 **A successful INSERT run commits changes and may fire triggers. Repeating Run repeats its effects. SELECT functions also execute. Cancellation cannot guarantee that changes are undone.**
 

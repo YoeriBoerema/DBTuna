@@ -2,6 +2,10 @@
 
 [Documentation](README.md) · [Development](development.md)
 
+## 0.8.1 security release verification — 29 October 2026
+
+All 150 unit tests, all eleven headless Edge browser suites, formatting, TypeScript, lint and builds passed. Live disposable PostgreSQL 18.4, SQL Server 2022 and Oracle Free integration suites passed. The isolated VS Code 1.96.4 host test passed, including new-connection defaults for all three engines. The refreshed dependency audit reports zero known vulnerabilities. See the [security remediation verification](security-review/RELEASE-VERIFICATION.md) for evidence, reproduction details and remaining limits.
+
 ## 0.8.0 release verification — 24 October 2026
 
 - Formatting, TypeScript and ESLint passed.

@@ -1,15 +1,16 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import { parse } from "pgsql-ast-parser";
 
 export function validateSql(sql: string) {
   if (!sql.trim())
-    throw Error(
+    throw new UserFacingError(
       "Select one complete SELECT, VALUES, INSERT, or WITH statement.",
     );
   let ast: ReturnType<typeof parse>;
   try {
     ast = parse(sql);
   } catch {
-    throw Error(
+    throw new UserFacingError(
       "Unsupported or incomplete PostgreSQL syntax. Select one complete SELECT, VALUES, INSERT, or WITH statement without surrounding log text; some PostgreSQL syntax is not supported by the parser.",
     );
   }
@@ -19,7 +20,8 @@ export function validatePostgresAst(
   sql: string,
   ast: ReturnType<typeof parse>,
 ) {
-  if (ast.length !== 1) throw Error("Select exactly one complete statement.");
+  if (ast.length !== 1)
+    throw new UserFacingError("Select exactly one complete statement.");
   // Only the main statement may insert. CTE bodies must remain read-oriented.
   let main: unknown = ast[0];
   while (
@@ -47,15 +49,17 @@ export function validatePostgresAst(
         "select into",
       ].includes(o.type)
     )
-      throw Error(
+      throw new UserFacingError(
         "UPDATE, DELETE and other unsupported statement types cannot be explained.",
       );
     if (o.type === "insert" && o !== main)
-      throw Error(
+      throw new UserFacingError(
         "Data-modifying CTEs are unsupported. Only the main statement may INSERT.",
       );
     if ((o.into !== undefined && o.type !== "insert") || o.for !== undefined)
-      throw Error("SELECT INTO and locking queries are unsupported.");
+      throw new UserFacingError(
+        "SELECT INTO and locking queries are unsupported.",
+      );
     for (const child of Object.values(o))
       if (Array.isArray(child)) child.forEach(check);
       else check(child);
@@ -68,7 +72,7 @@ export function validatePostgresAst(
       String(main.type),
     )
   )
-    throw Error(
+    throw new UserFacingError(
       "Only SELECT, VALUES, INSERT, and WITH statements ending in SELECT or INSERT are supported.",
     );
   check(ast);

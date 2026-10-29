@@ -1,12 +1,21 @@
-﻿import type { QueryPlan } from "../../../packages/plan-core/src/types";
+import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { validate } from "../../../packages/plan-core/src/schema";
 import { sameConnection, type Profile } from "../connection/profile";
 import type { ConnectionManager } from "../connection/connectionManager";
 import { databaseConnector } from "../connectors/registry";
 import type { ExtensionToWebview, ExecutionOutcome } from "../webview/messages";
 import { executionQuery } from "./executionQuery";
+import {
+  UserFacingError,
+  safeErrorMessage,
+} from "../../../packages/plan-core/src/errors";
 type ExecutionPlatform = {
   trusted: () => boolean;
+  confirm: (details: {
+    profile: Profile;
+    sql: string;
+    kind: "SELECT" | "INSERT";
+  }) => Promise<boolean>;
   exportPlan: (plan: QueryPlan) => Promise<void>;
 };
 type ActualCollector = (
@@ -39,8 +48,10 @@ export class ExecutionManager {
       plan.application.executionAvailable = true;
     } catch (error) {
       plan.application.executionAvailable = false;
-      plan.application.executionUnavailableReason =
-        error instanceof Error ? error.message : "Unsupported query.";
+      plan.application.executionUnavailableReason = safeErrorMessage(
+        error,
+        "Unsupported query.",
+      );
     }
     this.bindings.set(plan.id, { plan, profile: { ...profile }, batchSql });
   }
@@ -81,31 +92,51 @@ export class ExecutionManager {
       this.notify({ type: "EXECUTION_RESULT", planId, requestId, ...change });
     try {
       if (!this.platform.trusted())
-        throw Error("Trust the workspace before executing SQL.");
+        throw new UserFacingError("Trust the workspace before executing SQL.");
       const binding = this.bindings.get(planId);
       if (!binding || !this.isCurrent(planId))
-        throw Error(
+        throw new UserFacingError(
           "Run Explain again to enable execution on this live connection.",
         );
       const current = this.connections
         .profiles()
         .find((profile) => profile.id === binding.profile.id);
       if (!current || !sameConnection(current, binding.profile))
-        throw Error(
+        throw new UserFacingError(
           "The connection changed. Run Explain again before executing.",
         );
       const { sql, kind } = executionQuery(binding.plan, binding.batchSql);
-      if (abort.signal.aborted || !this.isCurrent(planId)) {
-        notify({ status: "cancelled", error: "Execution was not started." });
+      const check = () => {
+        if (abort.signal.aborted)
+          throw new UserFacingError("Execution cancelled before starting.");
+        if (!this.platform.trusted())
+          throw new UserFacingError(
+            "Trust the workspace before executing SQL.",
+          );
+        if (this.bindings.get(planId) !== binding || !this.isCurrent(planId))
+          throw new UserFacingError(
+            "Run Explain again to enable execution on this live connection.",
+          );
+        const fresh = this.connections
+          .profiles()
+          .find((profile) => profile.id === current.id);
+        if (!fresh || !sameConnection(fresh, binding.profile))
+          throw new UserFacingError(
+            "The connection changed. Run Explain again.",
+          );
+        const prepared = executionQuery(binding.plan, binding.batchSql);
+        if (prepared.sql !== sql || prepared.kind !== kind)
+          throw new UserFacingError("The query changed. Run Explain again.");
+      };
+      if (
+        !(await this.platform.confirm({ profile: { ...current }, sql, kind }))
+      ) {
+        notify({ status: "cancelled", error: "Execution was not approved." });
         return;
       }
-      const fresh = this.connections
-        .profiles()
-        .find((profile) => profile.id === current.id);
-      if (!fresh || !sameConnection(fresh, binding.profile))
-        throw Error("The connection changed. Run Explain again.");
+      check();
       const password = await this.connections.password(current);
-      if (abort.signal.aborted) throw Error("Execution cancelled.");
+      check();
       notify({ status: "running" });
       const start = Date.now();
       started = true;
@@ -116,9 +147,12 @@ export class ExecutionManager {
         binding.plan,
         kind,
       );
-      if (abort.signal.aborted) throw Error("Execution cancelled.");
+      if (abort.signal.aborted)
+        throw new UserFacingError("Execution cancelled.");
       if (!actual.nodes.some((node) => node.actuals))
-        throw Error("Query ran but no actual runtime counters were returned.");
+        throw new UserFacingError(
+          "Query ran but no actual runtime counters were returned.",
+        );
       actual.id = planId + ":actual:" + requestId;
       actual.query = binding.plan.query;
       actual.application.planKind = "actual";
@@ -133,7 +167,10 @@ export class ExecutionManager {
       notify({
         status: abort.signal.aborted ? "cancelled" : "error",
         error:
-          (error instanceof Error ? error.message : "Execution failed.") +
+          safeErrorMessage(
+            error,
+            "Execution failed. Check SQL syntax, connection settings and database permissions.",
+          ) +
           (started
             ? " Data may already have changed, even if the plan was not collected. Check the database before retrying."
             : ""),

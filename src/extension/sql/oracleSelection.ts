@@ -1,3 +1,4 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import {
   PLAN_LIMITS,
   SQL_LIMITS,
@@ -20,7 +21,7 @@ export function maskOracle(sql: string): string {
       hide(start, i);
     } else if (sql.startsWith("/*", i)) {
       const end = sql.indexOf("*/", i + 2);
-      if (end < 0) throw Error("Unclosed Oracle comment.");
+      if (end < 0) throw new UserFacingError("Unclosed Oracle comment.");
       i = end + 2;
       hide(start, i);
     } else if (
@@ -30,13 +31,14 @@ export function maskOracle(sql: string): string {
       const prefix = sql.slice(i).match(/^(?:n?q)'/i)![0];
       const open = sql[i + prefix.length];
       if (!open || /\s/.test(open))
-        throw Error("Invalid Oracle alternative quote.");
+        throw new UserFacingError("Invalid Oracle alternative quote.");
       const close =
         ({ "[": "]", "{": "}", "(": ")", "<": ">" } as Record<string, string>)[
           open
         ] || open;
       const end = sql.indexOf(close + "'", i + prefix.length + 1);
-      if (end < 0) throw Error("Unclosed Oracle alternative quote.");
+      if (end < 0)
+        throw new UserFacingError("Unclosed Oracle alternative quote.");
       i = end + 2;
       hide(start, i);
     } else if (sql[i] === "'" || sql[i] === '"') {
@@ -51,7 +53,7 @@ export function maskOracle(sql: string): string {
         closed = true;
         break;
       }
-      if (!closed) throw Error("Unclosed Oracle quote.");
+      if (!closed) throw new UserFacingError("Unclosed Oracle quote.");
       hide(start, i);
     } else i++;
   }
@@ -61,7 +63,7 @@ export function maskOracle(sql: string): string {
 export function splitOracle(text: string, selection?: string): string[] {
   const sql = selection === undefined ? text : selection;
   if (Buffer.byteLength(sql) > SQL_LIMITS.bytes)
-    throw Error("Selected SQL exceeds 1 MiB.");
+    throw new UserFacingError("Selected SQL exceeds 1 MiB.");
   const mask = maskOracle(sql),
     parts: string[] = [];
   let start = 0;
@@ -70,7 +72,7 @@ export function splitOracle(text: string, selection?: string): string[] {
       parts.push(sql.slice(start, end).trim());
     start = end;
     if (parts.length > PLAN_LIMITS.statements)
-      throw Error("Explain at most 20 statements at a time.");
+      throw new UserFacingError("Explain at most 20 statements at a time.");
   };
   // PL/SQL is never eligible. Keep an entire block until its client slash, or
   // conservatively to EOF, rather than accidentally executing its inner SQL.
@@ -116,7 +118,9 @@ export function splitOracle(text: string, selection?: string): string[] {
   }
   finish(sql.length);
   if (!parts.length)
-    throw Error("Select SQL statements or open a file containing SQL.");
+    throw new UserFacingError(
+      "Select SQL statements or open a file containing SQL.",
+    );
   return parts;
 }
 
@@ -127,7 +131,7 @@ export function oracleKind(sql: string): "SELECT" | "INSERT" {
   if (/^WITH\b/i.test(mask)) {
     // WITH functions/procedures contain executable PL/SQL and are excluded.
     if (/\b(?:FUNCTION|PROCEDURE)\b/i.test(mask))
-      throw Error("WITH PL/SQL declarations are unsupported.");
+      throw new UserFacingError("WITH PL/SQL declarations are unsupported.");
     let depth = 0;
     for (const token of mask.matchAll(/\(|\)|\b(?:SELECT|INSERT)\b/gi)) {
       if (token[0] === "(") depth++;
@@ -136,25 +140,26 @@ export function oracleKind(sql: string): "SELECT" | "INSERT" {
         return token[0].toUpperCase() as "SELECT" | "INSERT";
     }
   }
-  throw Error(
+  throw new UserFacingError(
     "Oracle supports one SELECT, WITH ... SELECT, or INSERT statement.",
   );
 }
 
 export function validateOracle(sql: string): string {
   const parts = splitOracle(sql);
-  if (parts.length !== 1) throw Error("Run one Oracle statement at a time.");
+  if (parts.length !== 1)
+    throw new UserFacingError("Run one Oracle statement at a time.");
   const query = parts[0].replace(/;\s*$/, "").trim(),
     mask = maskOracle(query);
   oracleKind(query);
   if (/\bCURSOR\s*\(/i.test(mask))
-    throw Error(
+    throw new UserFacingError(
       "Oracle nested cursor result sets are unsupported; select ordinary columns.",
     );
   if (/^\s*INSERT\s+(?:ALL|FIRST)\b/i.test(mask))
-    throw Error("Oracle multi-table INSERT is unsupported.");
+    throw new UserFacingError("Oracle multi-table INSERT is unsupported.");
   if (/[;:]/.test(mask))
-    throw Error(
+    throw new UserFacingError(
       "Oracle bind parameters and embedded statement terminators are unsupported; supply a complete statement with literal values.",
     );
   if (
@@ -165,15 +170,16 @@ export function validateOracle(sql: string): string {
       mask.replace(/^\s*INSERT\s+(?:ALL\s+|FIRST\s+)?INTO\b/i, "INSERT"),
     )
   )
-    throw Error(
+    throw new UserFacingError(
       "Only a single Oracle SELECT or INSERT is supported; locking, PL/SQL, multi-table INSERT and RETURNING are excluded.",
     );
   let depth = 0;
   for (const c of mask) {
     if (c === "(") depth++;
-    if (c === ")" && --depth < 0) throw Error("Unbalanced Oracle parentheses.");
+    if (c === ")" && --depth < 0)
+      throw new UserFacingError("Unbalanced Oracle parentheses.");
   }
-  if (depth) throw Error("Unbalanced Oracle parentheses.");
+  if (depth) throw new UserFacingError("Unbalanced Oracle parentheses.");
   return query;
 }
 

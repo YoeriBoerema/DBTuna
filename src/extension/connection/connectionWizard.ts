@@ -50,15 +50,7 @@ export async function configureConnection(
             ? "master"
             : "postgres"),
     ),
-    user = await ask(
-      "Username",
-      previous?.user ||
-        (type === "oracle"
-          ? "dbtuna"
-          : type === "sqlserver"
-            ? "sa"
-            : "postgres"),
-    );
+    user = await ask("Username", previous?.user || "dbtuna");
   let authentication: "default" | "ntlm" | undefined;
   let domain: string | undefined;
   if (type === "sqlserver") {

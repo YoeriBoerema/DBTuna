@@ -1,7 +1,11 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import { DATABASE_TIMEOUTS } from "../../../packages/plan-core/src/limits";
 import { Client, ClientConfig } from "pg";
 import { validateSql } from "../sql/statementSelection";
 import type { Profile } from "./profile";
+import { databaseError } from "./databaseErrors";
+import { protectPostgresResponses } from "./postgresBudget";
+import { bounded } from "../../../packages/plan-core/src/schema";
 export async function withClient<T>(
   config: ClientConfig,
   action: (c: Client) => Promise<T>,
@@ -13,17 +17,31 @@ export async function withClient<T>(
     connectionTimeoutMillis: DATABASE_TIMEOUTS.connectMs,
     query_timeout: timeoutMs,
   });
+  protectPostgresResponses(client);
+  let fail!: (error: Error) => void;
+  const failed = new Promise<never>((_resolve, reject) => {
+    fail = reject;
+  });
+  void failed.catch(() => {});
+  // pg emits fatal socket failures on the client as well as rejecting queries.
+  // Observe idle failures too; an unhandled error event would kill the host.
+  client.on("error", fail);
   const abort = () => {
     void client.end().catch(() => {});
   };
   signal?.addEventListener("abort", abort, { once: true });
   try {
-    if (signal?.aborted) throw Error("Cancelled.");
-    await client.connect();
-    return await action(client);
+    if (signal?.aborted) throw new UserFacingError("Cancelled.");
+    await Promise.race([client.connect(), failed]);
+    return await Promise.race([action(client), failed]);
+  } catch (error) {
+    if (signal?.aborted)
+      throw new UserFacingError("Database operation cancelled.");
+    throw databaseError(error);
   } finally {
     signal?.removeEventListener("abort", abort);
     await client.end().catch(() => {});
+    client.removeListener("error", fail);
   }
 }
 export function clientConfig(
@@ -59,7 +77,7 @@ export async function collectPlan(
           "EXPLAIN (FORMAT JSON, VERBOSE TRUE, COSTS TRUE) " + query,
         );
         return {
-          raw: result.rows[0]["QUERY PLAN"] as unknown,
+          raw: bounded(result.rows[0]["QUERY PLAN"]),
           version: String(version.rows[0].server_version),
         };
       } finally {
@@ -92,10 +110,12 @@ export async function collectActualPlan(
           "EXPLAIN (ANALYZE TRUE, BUFFERS TRUE, FORMAT JSON, VERBOSE TRUE, COSTS TRUE) " +
             query,
         );
-        if (signal?.aborted) throw Error("Execution cancelled before commit.");
+        const raw = bounded(result.rows[0]["QUERY PLAN"]);
+        if (signal?.aborted)
+          throw new UserFacingError("Execution cancelled before commit.");
         await client.query("COMMIT");
         return {
-          raw: result.rows[0]["QUERY PLAN"] as unknown,
+          raw,
           version: String(version.rows[0].server_version),
         };
       } catch (error) {

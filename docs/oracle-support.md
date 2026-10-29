@@ -24,7 +24,7 @@ Estimated collection issues `EXPLAIN PLAN` with a unique statement ID, reads str
 
 ## Actual execution
 
-The same **Run query and collect actual plan → Are you sure?** interaction applies to Oracle SELECT and INSERT. Cancellation uses the existing two-click control. Only a current host-bound live estimate authorizes execution; imported files do not.
+The same **Run query and collect actual plan → Are you sure?** interaction, followed by a modal VS Code confirmation, applies to Oracle SELECT and INSERT. Cancellation uses the existing two-click control. Only a current host-bound live estimate authorizes execution; imported files do not.
 
 Before execution DBTuna checks cursor-view access and enables session row-source statistics. A unique per-run SQL comment distinguishes this run from other executions, while the preview retains the original query. SELECT rows are fetched to completion in bounded batches and discarded. The collector finds exactly one executed SQL_ID/child cursor for that tag, then reads that cursor's runtime plan. Ambiguous cursors, missing counters or evicted plans fail collection rather than display unrelated statistics.
 

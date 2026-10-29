@@ -36,6 +36,8 @@ Actual Rows and timing metrics are per loop. Loops remain explicit; costs remain
 
 ## Native mapping and connections
 
+Use a dedicated role such as `dbtuna`, which is the new-connection username suggestion. Ask the DBA for CONNECT on the chosen database, USAGE on required schemas and only the target-object privileges needed by the SQL (normally SELECT for read estimates). Estimated INSERT requires appropriate INSERT privileges even though EXPLAIN does not write rows. Confirmed INSERT also needs any required sequence privileges; ON CONFLICT or RETURNING can need additional target privileges. Grant write access only when actual writes are intended. Administrator/superuser access is not required. SELECT functions can still have side effects according to their permissions.
+
 Mappings cover scans, index/bitmap access, joins, hashing, sorting, aggregation, limits, materialization, parallel gathers and append operators. Unknown operators use OTHER and preserve their native name and attributes. ModifyTable INSERT operations display an Insert label while retaining their native type.
 
 Connections use username/password and either verified TLS or disabled TLS for local development. TLS uses Node's certificate trust store. Custom CA/client-certificate selection and connection pooling are not implemented.

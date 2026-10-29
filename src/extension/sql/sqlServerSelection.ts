@@ -1,3 +1,4 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import {
   PLAN_LIMITS,
   SQL_LIMITS,
@@ -23,7 +24,7 @@ export function maskTsql(sql: string): string {
           i += 2;
         } else i++;
       }
-      if (depth) throw Error("Unclosed T-SQL comment.");
+      if (depth) throw new UserFacingError("Unclosed T-SQL comment.");
     } else if (["'", '"', "["].includes(sql[i])) {
       const close = sql[i] === "[" ? "]" : sql[i];
       i++;
@@ -37,7 +38,8 @@ export function maskTsql(sql: string): string {
           }
         }
       }
-      if (!closed) throw Error("Unclosed T-SQL quote or identifier.");
+      if (!closed)
+        throw new UserFacingError("Unclosed T-SQL quote or identifier.");
     } else {
       result += sql[i++];
       continue;
@@ -48,28 +50,31 @@ export function maskTsql(sql: string): string {
 }
 export function validateTsql(sql: string): string {
   if (new TextEncoder().encode(sql).length > SQL_LIMITS.bytes)
-    throw Error("Selected SQL exceeds 1 MiB.");
+    throw new UserFacingError("Selected SQL exceeds 1 MiB.");
   const tokens = maskTsql(sql);
   if (/:\w|\$\(/.test(tokens))
-    throw Error("SQLCMD directives are not supported.");
+    throw new UserFacingError("SQLCMD directives are not supported.");
   if (!/^\s*;*\s*(SELECT|WITH|INSERT|DECLARE)\b/i.test(tokens))
-    throw Error("Use SELECT, INSERT, WITH, or DECLARE followed by a query.");
+    throw new UserFacingError(
+      "Use SELECT, INSERT, WITH, or DECLARE followed by a query.",
+    );
   // Never allow the submitted text to disable Showplan or invoke opaque code.
   if (
     /\b(SET|UPDATE|DELETE|EXEC|EXECUTE|CREATE|ALTER|DROP|TRUNCATE|USE|DBCC|BACKUP|RESTORE|RECONFIGURE|SHUTDOWN|REVERT|OPENQUERY|OPENROWSET|OPENDATASOURCE|BULK|GO)\b/i.test(
       tokens,
     )
   )
-    throw Error(
+    throw new UserFacingError(
       "This T-SQL batch contains unsupported control, DDL, or external-access statements. Explain query batches only; omit SET and GO repetition counts.",
     );
-  if (!/\b(SELECT|INSERT)\b/i.test(tokens)) throw Error("No query to explain.");
+  if (!/\b(SELECT|INSERT)\b/i.test(tokens))
+    throw new UserFacingError("No query to explain.");
   return sql;
 }
 export function splitTsqlBatch(text: string, selection?: string): string[] {
   const sql = selection ?? text;
   if (new TextEncoder().encode(sql).length > SQL_LIMITS.bytes)
-    throw Error("Selected SQL exceeds 1 MiB.");
+    throw new UserFacingError("Selected SQL exceeds 1 MiB.");
   const masked = maskTsql(sql);
   const result: string[] = [];
   let start = 0;
@@ -81,8 +86,9 @@ export function splitTsqlBatch(text: string, selection?: string): string[] {
   }
   const tail = sql.slice(start).trim();
   if (maskTsql(tail).replace(/;/g, "").trim()) result.push(tail);
-  if (!result.length) throw Error("Select SQL queries or open a SQL file.");
+  if (!result.length)
+    throw new UserFacingError("Select SQL queries or open a SQL file.");
   if (result.length > PLAN_LIMITS.statements)
-    throw Error("Explain at most 20 T-SQL batches at a time.");
+    throw new UserFacingError("Explain at most 20 T-SQL batches at a time.");
   return result;
 }

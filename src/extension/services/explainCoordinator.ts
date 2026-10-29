@@ -1,9 +1,11 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import * as vscode from "vscode";
 import type { ConnectionManager } from "../connection/connectionManager";
 import type { PanelManager } from "../webview/panelManager";
 import type { ExecutionManager } from "./executionManager";
 import { prepareBatch, explainBatch } from "./batchExplain";
 import { databaseConnector } from "../connectors/registry";
+import { safeErrorMessage } from "../../../packages/plan-core/src/errors";
 export class ExplainCoordinator {
   private activeBatch?: AbortController;
   constructor(
@@ -20,10 +22,12 @@ export class ExplainCoordinator {
     const cancel = this.cancelAll;
 
     if (!vscode.workspace.isTrusted)
-      throw Error("Trust this workspace to use live database connections.");
+      throw new UserFacingError(
+        "Trust this workspace to use live database connections.",
+      );
     const editor = vscode.window.activeTextEditor;
     if (!editor)
-      throw Error(
+      throw new UserFacingError(
         "Click your SQL editor, select a statement, and run DBTuna: Explain Query again.",
       );
     const profile = await connections.active();
@@ -124,9 +128,10 @@ export class ExplainCoordinator {
                       status: abort.signal.aborted ? "cancelled" : "error",
                       error: abort.signal.aborted
                         ? "Batch cancelled."
-                        : error instanceof Error
-                          ? error.message
-                          : "Could not prepare database connection.",
+                        : safeErrorMessage(
+                            error,
+                            "Could not prepare database connection. Check credentials and permissions.",
+                          ),
                     }
                   : item,
               ),

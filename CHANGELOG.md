@@ -2,6 +2,17 @@
 
 Published downloads are available in [GitHub Releases](https://github.com/YoeriBoerema/DBTuna/releases). Version numbers in the source can be ahead of published VSIX files.
 
+## 0.8.1
+
+[Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.8.1)
+
+- Require a modal confirmation in the extension host before actual SELECT/INSERT execution, and revalidate the live plan, workspace trust and connection after approval and credential retrieval.
+- Bound PostgreSQL plaintext and decrypted TLS responses before protocol parsing, reject oversized declared frames, and enforce aggregate UTF-8 plan limits for object inputs. Validate actual response size before COMMIT.
+- Sanitize database errors before UI/export, preserve controlled permission/timeout and uncertain-write guidance, and omit historical diagnostics when restoring imported batches.
+- Suggest a dedicated `dbtuna` username for new connections and document minimum database privileges.
+- Refresh vulnerable transitive MSAL Node and fast-uri dependencies; use a frozen pnpm lockfile for reproducible releases and pin the PostgreSQL driver used by the protocol guard.
+- Add regression coverage for approval bypasses, stale authorization, native error disclosure, aggregate plan size and oversized frames through the real PostgreSQL driver over plaintext and verified TLS.
+
 ## 0.8.0
 
 [Release and VSIX](https://github.com/YoeriBoerema/DBTuna/releases/tag/v0.8.0)

@@ -66,7 +66,8 @@ test("batch retains valid results and individual syntax/unsupported/database fai
   );
   assert.equal(calls.length, 3);
   assert.ok(result.items[1].error?.includes("syntax"));
-  assert.match(result.items[3].error!, /Column missing/);
+  assert.match(result.items[3].error!, /Check SQL syntax/);
+  assert.equal(JSON.stringify(result).includes("Column missing"), false);
   assert.notEqual(result.items[0].plan!.id, result.items[4].plan!.id);
   assert.equal(snapshots[0][0], "pending");
   assert.equal(snapshots.at(-1)?.[4], "complete");

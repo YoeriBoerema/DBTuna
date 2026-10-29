@@ -10,6 +10,8 @@ Choose SQL Server when adding a connection. Provide a hostname and explicit TCP 
 
 Automatic Windows integrated sign-in, Entra sign-in and named-instance discovery are not implemented. For a named instance, supply its actual TCP port. TLS certificate verification is the default; trusting the server certificate is an explicit development option.
 
+New connections suggest the dedicated username `dbtuna`. Ask the DBA for access only to the intended database, SHOWPLAN in each referenced database and the target-object permissions required to compile the selected SQL (normally SELECT for reads). Estimated INSERT needs statement permissions even without execution. Grant INSERT and any necessary trigger/dependency permissions only when confirmed writes are intended. `sa` and sysadmin membership are not required. Explicitly chosen administrator profiles remain supported.
+
 ## SQL and multiple queries
 
 Estimated plans support SELECT, INSERT, WITH queries and DECLARE setup in the same query batch. Semicolons do not split the batch before compilation, preserving variable context. A standalone GO line, including a trailing comment, separates batches. GO repeat counts and SQLCMD controls are rejected.

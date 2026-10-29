@@ -1,3 +1,4 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import { SQL_LIMITS } from "../../../packages/plan-core/src/limits";
 import { MAX_BATCH_STATEMENTS } from "../../../packages/plan-core/src/batch";
 // Find candidate boundaries lexically; the PostgreSQL AST validator checks every
@@ -5,7 +6,7 @@ import { MAX_BATCH_STATEMENTS } from "../../../packages/plan-core/src/batch";
 export function splitSqlBatch(text: string, selection?: string): string[] {
   const sql = selection === undefined ? text : selection;
   if (new TextEncoder().encode(sql).byteLength > SQL_LIMITS.bytes)
-    throw Error("Selected SQL exceeds 1 MiB.");
+    throw new UserFacingError("Selected SQL exceeds 1 MiB.");
   const result: string[] = [];
   let start = 0,
     i = 0,
@@ -14,7 +15,7 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
     if (hasSql) {
       result.push(sql.slice(start, end).trim());
       if (result.length > MAX_BATCH_STATEMENTS)
-        throw Error(
+        throw new UserFacingError(
           `Explain at most ${MAX_BATCH_STATEMENTS} statements at a time.`,
         );
     }
@@ -43,7 +44,8 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
           i += 2;
         } else i++;
       }
-      if (depth) throw Error("Cannot split batch: unclosed SQL comment.");
+      if (depth)
+        throw new UserFacingError("Cannot split batch: unclosed SQL comment.");
       continue;
     }
     const quote = sql[i];
@@ -59,7 +61,7 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
       while (i < sql.length) {
         if (sql[i] === "\\" && quote === "'") {
           if (!escaped)
-            throw Error(
+            throw new UserFacingError(
               "Ambiguous backslash quoting. Use an explicit E string or standard doubled quotes.",
             );
           i += 2;
@@ -76,7 +78,8 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
         }
         i++;
       }
-      if (!closed) throw Error("Cannot split batch: unclosed SQL quote.");
+      if (!closed)
+        throw new UserFacingError("Cannot split batch: unclosed SQL quote.");
       continue;
     }
     if (sql[i] === "$" && (i === 0 || !/[\w$]/.test(sql[i - 1]))) {
@@ -84,7 +87,10 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
       if (tag) {
         hasSql = true;
         const end = sql.indexOf(tag, i + tag.length);
-        if (end < 0) throw Error("Cannot split batch: unclosed dollar quote.");
+        if (end < 0)
+          throw new UserFacingError(
+            "Cannot split batch: unclosed dollar quote.",
+          );
         i = end + tag.length;
         continue;
       }
@@ -99,6 +105,8 @@ export function splitSqlBatch(text: string, selection?: string): string[] {
   }
   finish(sql.length);
   if (!result.length)
-    throw Error("Select SQL statements or open a file containing SQL.");
+    throw new UserFacingError(
+      "Select SQL statements or open a file containing SQL.",
+    );
   return result;
 }

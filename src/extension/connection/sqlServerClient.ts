@@ -1,3 +1,4 @@
+import { UserFacingError } from "../../../packages/plan-core/src/errors";
 import {
   PLAN_LIMITS,
   DATABASE_TIMEOUTS,
@@ -5,6 +6,7 @@ import {
 import { Connection, Request, type ConnectionConfiguration } from "tedious";
 import type { Profile } from "./profile";
 import { validateTsql } from "../sql/sqlServerSelection";
+import { databaseError } from "./databaseErrors";
 export function sqlServerConfig(
   p: Profile,
   password?: string,
@@ -49,24 +51,26 @@ export async function withSqlServer<T>(
   const abort = () => connection.close();
   signal?.addEventListener("abort", abort, { once: true });
   try {
-    if (signal?.aborted) throw Error("Cancelled.");
+    if (signal?.aborted) throw new UserFacingError("Cancelled.");
     await new Promise<void>((resolve, reject) => {
       connection.once("error", reject);
       connection.once("end", () =>
-        reject(Error("SQL Server connection closed.")),
+        reject(new UserFacingError("SQL Server connection closed.")),
       );
       connection.connect((error) => (error ? reject(error) : resolve()));
     });
     const query = (sql: string, options?: { plansOnly?: boolean }) =>
       new Promise<unknown[][]>((resolve, reject) => {
         if (signal?.aborted) {
-          reject(Error("Cancelled."));
+          reject(new UserFacingError("Cancelled."));
           return;
         }
         const rows: unknown[][] = [];
         let bytes = 0;
         const end = () =>
-          reject(Error("SQL Server connection closed or cancelled."));
+          reject(
+            new UserFacingError("SQL Server connection closed or cancelled."),
+          );
         connection.once("end", end);
         const request = new Request(sql, (error) => {
           connection.removeListener("end", end);
@@ -86,7 +90,7 @@ export async function withSqlServer<T>(
           );
           bytes += Buffer.byteLength(JSON.stringify(values));
           if (bytes > PLAN_LIMITS.bytes) {
-            reject(Error("Plan exceeds 5 MiB."));
+            reject(new UserFacingError("Plan exceeds 5 MiB."));
             connection.close();
           } else rows.push(values);
         });
@@ -94,6 +98,10 @@ export async function withSqlServer<T>(
         connection.execSqlBatch(request);
       });
     return await action(query);
+  } catch (error) {
+    if (signal?.aborted)
+      throw new UserFacingError("Database operation cancelled.");
+    throw databaseError(error);
   } finally {
     signal?.removeEventListener("abort", abort);
     connection.close();
@@ -135,7 +143,9 @@ export async function explainSqlServerSession(
         (v): v is string => typeof v === "string" && v.includes("ShowPlanXML"),
       );
     if (xml.length !== 1)
-      throw Error("Expected one Showplan XML document for this T-SQL batch.");
+      throw new UserFacingError(
+        "Expected one Showplan XML document for this T-SQL batch.",
+      );
     return { raw: xml[0], version: undefined };
   } finally {
     if (!signal?.aborted) await query("SET SHOWPLAN_XML OFF").catch(() => {});
@@ -161,7 +171,7 @@ export async function actualSqlServerSession(
           typeof value === "string" && value.includes("ShowPlanXML"),
       );
     if (!documents.length || documents.length > PLAN_LIMITS.actualDocuments)
-      throw Error(
+      throw new UserFacingError(
         "Query ran but no single actual plan was returned. Data may already have changed; do not retry blindly.",
       );
     return {

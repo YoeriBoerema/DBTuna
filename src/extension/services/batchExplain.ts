@@ -6,6 +6,7 @@ import {
 } from "../../../packages/plan-core/src/batch";
 import type { QueryPlan } from "../../../packages/plan-core/src/types";
 import { databaseConnector } from "../connectors/registry";
+import { safeErrorMessage } from "../../../packages/plan-core/src/errors";
 export function prepareBatch(
   statements: string[],
   type: "postgresql" | "sqlserver" | "oracle" = "postgresql",
@@ -101,9 +102,10 @@ export async function explainBatch(
         status: signal.aborted ? "cancelled" : "error",
         error: signal.aborted
           ? "Batch cancelled."
-          : e instanceof Error
-            ? e.message
-            : "Could not explain query.",
+          : safeErrorMessage(
+              e,
+              "Could not explain query. Check SQL syntax, object names and database permissions.",
+            ),
       });
     }
   }

@@ -48,6 +48,23 @@ exports.run = async () => {
     await vscode.commands.executeCommand("dbtuna.addConnection");
     assert.deepEqual(inputs, ["Connection name"]);
     assert.deepEqual(errors, []);
+    for (const engine of ["postgresql", "sqlserver", "oracle"]) {
+      let checkedUsername = false;
+      vscode.window.showQuickPick = async (items) =>
+        items.find((item) => item.value === engine) || items[0];
+      vscode.window.showInputBox = async (options) => {
+        if (options.prompt === "Username") {
+          assert.equal(options.value, "dbtuna");
+          checkedUsername = true;
+          return undefined; // Stop before any credentials are requested or saved.
+        }
+        return options.prompt === "Connection name"
+          ? "Security test"
+          : options.value;
+      };
+      await vscode.commands.executeCommand("dbtuna.addConnection");
+      assert.equal(checkedUsername, true);
+    }
   } finally {
     vscode.window.showInputBox = originalInput;
     vscode.window.showQuickPick = originalPick;

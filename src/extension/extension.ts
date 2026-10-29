@@ -11,6 +11,7 @@ import { SqlServerAdapter } from "../../packages/adapter-sqlserver/src/sqlServer
 import { OracleAdapter } from "../../packages/adapter-oracle/src/oracleAdapter";
 import { ConnectionManager } from "./connection/connectionManager";
 import { PanelManager } from "./webview/panelManager";
+import { safeErrorMessage } from "../../packages/plan-core/src/errors";
 export async function activate(context: vscode.ExtensionContext) {
   const registry = new AdapterRegistry([
     new PostgresAdapter(),
@@ -68,6 +69,19 @@ export async function activate(context: vscode.ExtensionContext) {
       !!panels.batch?.items.some((item) => item.plan?.id === id),
     {
       trusted: () => vscode.workspace.isTrusted,
+      confirm: async ({ profile, sql, kind }) => {
+        const run = "Run query";
+        return (
+          (await vscode.window.showWarningMessage(
+            `Run ${kind} on ${profile.name} (${profile.type})?`,
+            {
+              modal: true,
+              detail: `INSERT commits changes. SELECT functions can have side effects.\n\n${sql}`,
+            },
+            run,
+          )) === run
+        );
+      },
       exportPlan: async (plan) => {
         const uri = await vscode.window.showSaveDialog({
           defaultUri: vscode.Uri.file("dbtuna-actual-plan.json"),
@@ -101,7 +115,10 @@ export async function activate(context: vscode.ExtensionContext) {
         try {
           return await fn();
         } catch (e) {
-          const message = e instanceof Error ? e.message : "Unexpected error";
+          const message = safeErrorMessage(
+            e,
+            "Operation failed. Check input, connection settings and permissions.",
+          );
           void vscode.window.showErrorMessage("DBTuna: " + message);
           if (id === "explainQuery")
             panels.send({ type: "PLAN_ERROR", message });
