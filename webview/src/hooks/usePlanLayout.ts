@@ -24,6 +24,9 @@ export function usePlanLayout(
     [selected, setSelected] = useState<string>(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  // Layout promises must use the latest interaction, not the selection captured
+  // when a layout started. Keep this in sync before scheduling React state.
+  const selectedRef = useRef<string | undefined>(undefined);
   const flow = useReactFlow();
   const initialized = useNodesInitialized();
   const [layoutReady, setLayoutReady] = useState(0);
@@ -50,9 +53,10 @@ export function usePlanLayout(
     if (!plan) return;
     let stale = false;
     setBusy(true);
-    const selection = plan.nodes.some((n) => n.id === selected)
-      ? selected
+    const selection = plan.nodes.some((n) => n.id === selectedRef.current)
+      ? selectedRef.current
       : plan.rootNodeIds[0];
+    selectedRef.current = selection;
     setSelected(selection);
     elk
       .layout({
@@ -86,7 +90,7 @@ export function usePlanLayout(
               type: "operator",
               position: { x: p?.x || 0, y: p?.y || 0 },
               data: { operator: n, view },
-              selected: n.id === selection,
+              selected: n.id === selectedRef.current,
             };
           }),
         );
@@ -119,6 +123,7 @@ export function usePlanLayout(
     };
   }, [plan, revision, view]);
   const pick = useCallback((id: string) => {
+    selectedRef.current = id;
     setSelected(id);
     setNodes((current) =>
       current.map((n) => ({ ...n, selected: n.id === id })),

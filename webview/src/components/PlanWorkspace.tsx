@@ -57,7 +57,14 @@ export function PlanWorkspace({
             edges={edges}
             nodeTypes={nodeTypes}
             onNodeClick={(_, n) => pick(n.id)}
+            onNodeDragStart={(_, n) => pick(n.id)}
             onNodesChange={(changes) => {
+              // React Flow can select on pointer-down even if movement prevents
+              // a click. Route that selection through the details state too.
+              const selection = changes.find(
+                (change) => change.type === "select" && change.selected,
+              );
+              if (selection?.type === "select") pick(selection.id);
               setNodes((current) =>
                 current.map((n) => {
                   const c = changes.find(
