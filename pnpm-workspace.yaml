@@ -4,8 +4,8 @@ packages:
 # DBTuna supports SQL/password and explicit NTLM, not Azure auth-code flows.
 overrides:
   "@azure/msal-node": 7.1.0
-ignoredBuiltDependencies:
-  - esbuild
-  - "@vscode/vsce-sign"
-  - keytar
-  - oracledb
+allowBuilds:
+  esbuild: false
+  "@vscode/vsce-sign": false
+  keytar: false
+  oracledb: false

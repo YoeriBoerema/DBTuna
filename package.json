@@ -48,7 +48,11 @@
     "test:oracle:docker": "node test/integration/oracle-docker.mjs",
     "test:sqlserver": "tsx --test test/integration/sqlserver.test.ts",
     "test:sqlserver:docker": "node test/integration/sqlserver-docker.mjs",
-    "test:databases": "node test/integration/databases.mjs"
+    "test:databases": "node test/integration/databases.mjs",
+    "test:databases:up": "node test/integration/deployed-databases.mjs up",
+    "test:databases:down": "node test/integration/deployed-databases.mjs down",
+    "test:databases:run": "node test/integration/deployed-databases.mjs run",
+    "test:databases:seed": "node test/integration/deployed-databases.mjs seed"
   },
   "contributes": {
     "configuration": {
