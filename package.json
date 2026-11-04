@@ -2,7 +2,7 @@
   "name": "dbtuna",
   "displayName": "DBTuna",
   "description": "Inspect PostgreSQL, SQL Server and Oracle execution plans beside your SQL.",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "packageManager": "pnpm@11.25.0",
   "publisher": "dbtuna-local",
   "license": "SEE LICENSE IN LICENSE",
